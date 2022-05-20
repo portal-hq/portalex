@@ -22,5 +22,7 @@ docker run \
 yarn
 
 # start the server
-yarn demo
+CUSTODIAN_API_KEY=<YOUR_CUSTODIAN_API_KEY> \
+  WEBHOOK=<YOUR_WEBHOOK_URL> \
+  yarn demo
 ```

@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int     @id @default(autoincrement())
+  walletId       String
+  exchangeUserId Int
+  clientApiKey   String?
+  username       String
+  apiSecret      String?
+  apiKey         String?
+  address        String?
+  pushToken      String?
+  wallet         Wallet?
+}
+
+model Wallet {
+  id         String @id @default(cuid())
+  publicKey  String
+  privateKey String
+  user       User?  @relation(fields: [userId], references: [id])
+  userId     Int?   @unique
+
+  @@map("wallets")
+}
+
+model ExchangeBalance {
+  id            Int     @id @default(autoincrement())
+  cachedBalance Decimal @default(0)
+
+  @@map("exchange_balance")
+}

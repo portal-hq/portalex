@@ -23,6 +23,6 @@ yarn
 
 # start the server
 CUSTODIAN_API_KEY=<YOUR_CUSTODIAN_API_KEY> \
-  WEBHOOK=<YOUR_WEBHOOK_URL> \
+  WEBHOOK_URL=<YOUR_WEBHOOK_URL> \
   yarn demo
 ```

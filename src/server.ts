@@ -112,5 +112,5 @@ app.post('/webhook', async (req, res) => {
 })
 
 app.listen(port, () =>
-  console.log(`mock-exchange-server listening on port ${port}!`)
+  console.log(`PortalEx Server listening on port ${port}!`)
 )

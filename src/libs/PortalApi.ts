@@ -1,7 +1,5 @@
 import axios from 'axios'
 import {
-  PORTAL_API_KEY,
-  PORTAL_API_SECRET,
   PORTAL_API_URL,
 } from '../config'
 
@@ -40,16 +38,15 @@ class PortalApi {
   async registerWebhook(custodianId: string, webhookUri: string, webhookSecret: string) {
     await axios
       .post(
-        `${PORTAL_API_URL}/app/custodians/${custodianId}/webhook`,
+        `${PORTAL_API_URL}/api/webhook`,
         { webhook: webhookUri, secret: webhookSecret, custodianId },
         {
           headers: {
-            apikey: PORTAL_API_KEY,
-            apisecret: PORTAL_API_SECRET,
             Authorization: `Bearer ${this.apiKey}`, 
           },
         }
       )
+      .catch(e => console.error(e.response.data))
   }
 }
 

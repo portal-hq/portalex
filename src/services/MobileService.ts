@@ -1,15 +1,11 @@
 import {
   CUSTODIAN_API_KEY,
   INIT_AMOUNT,
-  PORTAL_API_KEY,
-  PORTAL_API_SECRET,
-  PORTAL_API_URL,
 } from '../config'
 import { isAddress } from 'ethers/lib/utils'
 import { Expo, ExpoPushMessage } from 'expo-server-sdk'
 import { PrismaClient, User } from '@prisma/client'
 import { Request, Response } from 'express'
-import axios from 'axios'
 import { EntityNotFoundError } from '../libs/errors'
 import WalletService from './WalletService'
 import PortalApi from '../libs/PortalApi'
@@ -216,30 +212,6 @@ class MobileService {
     })
 
     return user
-  }
-
-
-  /*
-   * Get active sessions
-   */
-  async getSessions(req: any, res: any): Promise<void> {
-    try {
-      const exchangeUserId = Number(req.params['exchangeUserId'])
-      const user = await this.getUserByExchangeId(exchangeUserId)
-
-      console.info(`Attempting to get sessions for: ${user.walletId}`)
-
-      const sessions = await axios
-        .get(`${PORTAL_API_URL}/wallets/${user.walletId}/sessions`, {
-          headers: { APIKey: PORTAL_API_KEY, APISecret: PORTAL_API_SECRET },
-        })
-        .then((res) => res.data.sessions)
-
-      res.status(200).send(sessions)
-    } catch (error) {
-      console.error(error)
-      res.status(500).send('Unknown server error')
-    }
   }
 
   /*

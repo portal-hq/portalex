@@ -23,7 +23,7 @@ async function seedDemo() {
 
   // demo user & demo custodian id
   await mobileService.createUser("demo")
-  await portalApi.registerWebhook("cl3danrok00053f6ivunv", WEBHOOK_URL, WEBHOOK_SECRET) // demo custodian id
+  await portalApi.registerWebhook(WEBHOOK_URL, WEBHOOK_SECRET) // demo custodian id
 }
 
 seedDemo()

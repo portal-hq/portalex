@@ -35,11 +35,11 @@ class PortalApi {
    * Registers this custodian's webhook URL and secret with portal's connect api
    * 
    */
-  async registerWebhook(custodianId: string, webhookUri: string, webhookSecret: string) {
+  async registerWebhook(webhookUri: string, webhookSecret: string) {
     await axios
       .post(
         `${PORTAL_API_URL}/api/webhook`,
-        { webhook: webhookUri, secret: webhookSecret, custodianId },
+        { webhook: webhookUri, secret: webhookSecret },
         {
           headers: {
             Authorization: `Bearer ${this.apiKey}`, 

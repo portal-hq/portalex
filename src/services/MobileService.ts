@@ -9,6 +9,7 @@ import { Request, Response } from 'express'
 import { EntityNotFoundError } from '../libs/errors'
 import WalletService from './WalletService'
 import PortalApi from '../libs/PortalApi'
+import { Decimal } from '@prisma/client/runtime'
 
 interface ExchangeService {
   getBalance: Function
@@ -157,7 +158,7 @@ class MobileService {
       console.info(
         `Transferring funds to new wallet ${wallet.publicKey} from hot wallet at ${this.exchangeService.address}`
       )
-      await this.transferExchangeFunds(wallet.publicKey, INIT_AMOUNT)
+      await this.transferExchangeFunds(wallet.publicKey, INIT_AMOUNT, 4)
 
       // await expo.sendPushNotificationsAsync([
       //   {
@@ -259,6 +260,7 @@ class MobileService {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const amount = Number(req.body['amount'])
+      const chainId = Number(req.body['chainId'])
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
@@ -269,7 +271,8 @@ class MobileService {
       console.log(
         `Transferring ${amount} ETH into ${user.address} (user: ${user.exchangeUserId})`
       )
-      await this.transferExchangeFunds(user.address, amount)
+      await this.transferExchangeFunds(user.address, amount, chainId)
+
 
       console.info(
         `Successfully submitted transfer for ${amount} ETH into ${user.address} (user: ${user.exchangeUserId})`
@@ -289,17 +292,24 @@ class MobileService {
   async getExchangeBalance(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
-      const cache = await this.prisma.exchangeBalance.findFirst()
+
+      if (!('chainId' in req.query)) {
+        throw new Error("Chain id is required for getting the balance")
+      }
+      const chainId = Number(req.query['chainId'])
+
+      const cache = await this.prisma.exchangeBalance.findFirst({where: {chainId}})
       let balance = cache?.cachedBalance
 
       if (!balance) {
-        const updatedBalance = await this.exchangeService.getBalance()
+        const updatedBalance = await this.exchangeService.getBalance(chainId)
         await this.prisma.exchangeBalance.create({
           data: {
             cachedBalance: updatedBalance,
+            chainId
           },
         })
-        balance = updatedBalance
+        balance = new Decimal(updatedBalance)
       }
 
       console.info(
@@ -319,14 +329,16 @@ class MobileService {
   async refreshExchangeBalance(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
+      const chainId = Number(req.body['chainId'])
 
-      const updatedBalance = await this.exchangeService.getBalance()
+      const updatedBalance = await this.exchangeService.getBalance(chainId)
 
-      const cachedBalance = await this.prisma.exchangeBalance.findFirst()
+      const cachedBalance = await this.prisma.exchangeBalance.findFirst({ where: { chainId } })
       if (!cachedBalance) {
         await this.prisma.exchangeBalance.create({
           data: {
             cachedBalance: updatedBalance,
+            chainId
           },
         })
       } else {
@@ -336,6 +348,7 @@ class MobileService {
           },
           data: {
             cachedBalance: updatedBalance,
+            chainId
           },
         })
       }
@@ -428,12 +441,12 @@ class MobileService {
    * Transfers an amount of funds from the omnibus to a specific "to" address.
    * Primarily used to send funds to the users connected portal wallet.
    */
-  private async transferExchangeFunds(to: string, amount: number) {
+  private async transferExchangeFunds(to: string, amount: number, chainId: number) {
     if (!isAddress(to)) {
       throw new Error(`Address ${to} is not a valid ethereum address.`)
     }
 
-    const balance = this.exchangeService.getBalance()
+    const balance = this.exchangeService.getBalance(chainId)
     if (amount >= 0 && Number(balance) < amount) {
       throw new Error(
         `You're balance of ${balance} is too low to transfer ${amount} ETH to your portal wallet`
@@ -441,7 +454,7 @@ class MobileService {
     }
 
     this.exchangeService
-      .sendTransaction(to, amount)
+      .sendTransaction(to, amount, chainId)
       .then((res: any) => console.info(`Transaction submitted status: ${res}`))
       .catch(console.error)
   }

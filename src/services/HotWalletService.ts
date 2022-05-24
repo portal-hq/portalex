@@ -1,9 +1,7 @@
-import {
-  ETH_NETWORK,
-} from '../config'
 import { ethers, utils, Wallet } from 'ethers'
 import { isAddress } from 'ethers/lib/utils'
 import { PrismaClient } from '@prisma/client'
+import { chainToName } from '../libs/utils'
 
 class HotWalletService {
   constructor(private prisma: PrismaClient, public address: string, private privateKey: string) {
@@ -11,8 +9,9 @@ class HotWalletService {
   /*
    * returns (String) Users account balance of Ether in USD.
    */
-  async getBalance() {
-    const provider = ethers.getDefaultProvider(ETH_NETWORK)
+  async getBalance(chainId: number) {
+    const network = chainToName(chainId)
+    const provider = ethers.getDefaultProvider(network)
     const wallet = new Wallet(this.privateKey, provider)
     const bigNumberBalance = await wallet.getBalance()
     const balance = ethers.utils.formatEther(bigNumberBalance)
@@ -23,7 +22,7 @@ class HotWalletService {
    * Initiates transfer of AMOUNT of eth to the to address.
    * Returns 200 if the request was successful
    */
-  async sendTransaction(to: string, amount: number) {
+  async sendTransaction(to: string, amount: number, chainId: number) {
     let from = this.address
     let privateKey = this.privateKey
 
@@ -38,7 +37,8 @@ class HotWalletService {
       throw new Error(`Address "${notAddress} is not a valid ethereum address.`)
     }
 
-    const provider = ethers.getDefaultProvider(ETH_NETWORK)
+    const network = chainToName(chainId)
+    const provider = ethers.getDefaultProvider(network)
 
     // if its negative, we want to transfer from the web3 wallet to the exchange
     if (amount < 0) {

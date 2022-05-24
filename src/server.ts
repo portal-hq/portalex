@@ -42,7 +42,7 @@ app.get('/mobile/:exchangeUserId/balance', async (req: any, res: any) => {
   await mobileService.getExchangeBalance(req, res)
 })
 
-app.get(
+app.post(
   '/mobile/:exchangeUserId/balance/refresh',
   async (req: any, res: any) => {
     await mobileService.refreshExchangeBalance(req, res)

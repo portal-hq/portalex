@@ -33,6 +33,7 @@ model Wallet {
 model ExchangeBalance {
   id            Int     @id @default(autoincrement())
   cachedBalance Decimal @default(0)
+  chainId       Int     @default(4)
 
   @@map("exchange_balance")
 }

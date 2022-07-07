@@ -1,5 +1,5 @@
 import { PrismaClient, Wallet } from '@prisma/client'
-import { ethers, Wallet as EthersWallet } from 'ethers'
+import { Wallet as EthersWallet } from 'ethers'
 import { SigningKey } from 'ethers/lib/utils'
 
 export default class WalletService {

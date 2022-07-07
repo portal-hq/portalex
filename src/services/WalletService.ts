@@ -35,4 +35,19 @@ export default class WalletService {
     }
     return new SigningKey(wallet.privateKey)
   }
+
+     /**
+   * Uses the address of a user to get their private key and return it
+   *
+   * @returns PrivateKey
+   */
+  async getPrivateKey(address: string): Promise<string> {
+    const wallet = await this.prisma.wallet.findFirst({
+      where: { publicKey: address },
+    })
+    if (!wallet) {
+      throw new Error('No wallet found for that address')
+    }
+    return wallet.privateKey
+  }
 }

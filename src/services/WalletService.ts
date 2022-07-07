@@ -1,5 +1,5 @@
 import { PrismaClient, Wallet } from '@prisma/client'
-import { Wallet as EthersWallet } from 'ethers'
+import { ethers, Wallet as EthersWallet } from 'ethers'
 import { SigningKey } from 'ethers/lib/utils'
 
 export default class WalletService {
@@ -34,5 +34,20 @@ export default class WalletService {
       throw new Error('No wallet found for that address')
     }
     return new SigningKey(wallet.privateKey)
+  }
+
+     /**
+   * Uses the address of a user to get their private key and return it
+   *
+   * @returns PrivateKey
+   */
+  async getPrivateKey(address: string): Promise<string> {
+    const wallet = await this.prisma.wallet.findFirst({
+      where: { publicKey: address },
+    })
+    if (!wallet) {
+      throw new Error('No wallet found for that address')
+    }
+    return wallet.privateKey
   }
 }

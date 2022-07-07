@@ -14,6 +14,7 @@ import HotWalletService from './services/HotWalletService'
 import WalletService from './services/WalletService'
 import { EXCHANGE_WALLET_ADDRESS, EXCHANGE_WALLET_PRIVATE_KEY } from './config'
 import { Wallet as EthersWallet } from 'ethers'
+import { signTypedData_v4 } from "eth-sig-util";
 
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
@@ -88,14 +89,15 @@ app.post('/webhook', async (req, res) => {
       console.log(`Responding with Signature: ${signature}`)
       res.status(200).send(signature)
     } else if (req.body?.method === 'signTypedData') {
-      const { domain, types, value, address } = req.body
+      const { data, address } = req.body
 
       console.log(`SignTypedData request from address: ${address}`)
-      const signingKey = await walletService.getSigningKey(address)
-      const signature = signingKey.signDigest(
-        _TypedDataEncoder.hash(domain, types, value)
-      )
+      const privateKey = await walletService.getPrivateKey(address)
 
+      const jsonData = JSON.parse(data)
+      const signature = signTypedData_v4(Buffer.from(privateKey.slice(2), "hex"), {
+        data: jsonData,
+      });
       console.log(`Responding with Signature: ${signature}`)
       res.status(200).send(signature)
     } else if (req.body?.method === 'push') {

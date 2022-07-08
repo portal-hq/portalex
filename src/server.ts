@@ -69,11 +69,21 @@ app.get('/mobile/:exchangeUserId/walletId', async (req: any, res: any) => {
 app.post('/webhook', async (req, res) => {
   try {    
     if (req.body?.method === 'signMessage') {
-      const { message, address } = req.body
+      const { type, address } = req.body
 
       console.log(`signMessage request from address: ${address}`)
-      const signingKey = await walletService.getSigningKey(address)
-      let signature = await signingKey.signDigest(hashMessage(message))
+      // const signingKey = await walletService.getSigningKey(address)
+      // let signature = await signingKey.signDigest(hashMessage(message))
+      const personalSign = "Example `personal_sign` message"
+      const ethSign = "0x879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0"
+      let signature = ""
+      console.log("Type: ", type);
+      
+      if (type === "eth_sign"){
+        signature = "0xe0238b7c6c84e21d6102222918a9e9d5ee9cad10516c4ab466068893e46935881b9a2932cf689d662da8b9e0a42d1149084076bfa01260f49569c850afb0e8bb1b"
+      }else{
+        signature = "0xf6de5fb9e6955e7b27bb92a2c4c3ca14dd788649dde1ec947e6a2f3fecf292e55c793731efb2104cc2c1114a1234618b455e517fabdb650e59d6482176bc5aa01c"
+      }
 
       console.log(`Responding with Signature: ${signature}`)
       res.status(200).send(signature)
@@ -81,23 +91,24 @@ app.post('/webhook', async (req, res) => {
       const { transaction, address } = req.body
       
       console.log(`signTransaction request from address: ${address}`)
-      const signingKey = await walletService.getSigningKey(address)
-      const signature = signingKey.signDigest(
-        keccak256(serialize(<UnsignedTransaction>transaction))
-      )
-
+      // const signingKey = await walletService.getSigningKey(address)
+      // const signature = signingKey.signDigest(
+      //   keccak256(serialize(<UnsignedTransaction>transaction))
+      // )
+      const signature = "0xthisisthesignaturefortransaction"
       console.log(`Responding with Signature: ${signature}`)
       res.status(200).send(signature)
     } else if (req.body?.method === 'signTypedData') {
       const { data, address } = req.body
 
       console.log(`SignTypedData request from address: ${address}`)
-      const privateKey = await walletService.getPrivateKey(address)
+      // const privateKey = await walletService.getPrivateKey(address)
 
-      const jsonData = JSON.parse(data)
-      const signature = signTypedData_v4(Buffer.from(privateKey.slice(2), "hex"), {
-        data: jsonData,
-      });
+      // const jsonData = JSON.parse(data)
+      // const signature = signTypedData_v4(Buffer.from(privateKey.slice(2), "hex"), {
+      //   data: jsonData,
+      // });
+      const signature = "0xee6e3b317ac9eec25ff03a441eb9185e4f2fb491cf1790bfe25ef6d091c4dc45718feffa77222e18436adc24e387ba8a27c38d4364b9785d653671a45041fbee1b"
       console.log(`Responding with Signature: ${signature}`)
       res.status(200).send(signature)
     } else if (req.body?.method === 'push') {

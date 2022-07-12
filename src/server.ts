@@ -95,7 +95,8 @@ app.post('/webhook', async (req, res) => {
       // const signature = signingKey.signDigest(
       //   keccak256(serialize(<UnsignedTransaction>transaction))
       // )
-      const signature = "0xthisisthesignaturefortransaction"
+      // below signature is for transaction sending 1 wei from address 0xce6AC8aa39037e380dA92251d0D17e0B127e0b26
+      const signature = "0x44c84e2748795a2375e576dea14d5ce93c37d548054bdc1646df16b4816e40971d0a1b13900c1e7b1065c6069d6885c0831f06260c6ed2d3775e3dbc65d8aa3a"
       console.log(`Responding with Signature: ${signature}`)
       res.status(200).send(signature)
     } else if (req.body?.method === 'signTypedData') {

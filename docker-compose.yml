@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  db:
+    container_name: postgres
+    image: postgres
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USERNAME=${POSTGRES_USERNAME}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  ngrok:
+    container_name: ngrok
+    image: ngrok/ngrok
+    env_file:
+      - .env
+    ports:
+      - "4040:4040"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTH}
+      - NGROK_DEBUG=true
+    command: "http portalex:${PORTALEX_PORT}"
+
+  portalex:
+    build: .
+    container_name: portalex
+    ports:
+      - "${PORTALEX_PORT}:${PORTALEX_PORT}"
+    environment:
+      - NODE_OPTIONS=--openssl-legacy-provider
+    expose:
+      - ${PORTALEX_PORT}
+    env_file:
+      - .env
+    depends_on:
+      - db
+    command: "yarn start"
+
+volumes:
+  db:
+    driver: local

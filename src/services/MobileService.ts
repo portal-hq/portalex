@@ -18,10 +18,10 @@ interface ExchangeService {
 }
 
 class MobileService {
-  private walletService: WalletService
+  // private walletService: WalletService
   private portalApi: PortalApi
   constructor(private prisma: PrismaClient, private exchangeService: ExchangeService) {
-    this.walletService = new WalletService(this.prisma)
+    // this.walletService = new WalletService(this.prisma)
     this.portalApi = new PortalApi(CUSTODIAN_API_KEY)
   }
 
@@ -31,7 +31,7 @@ class MobileService {
   async login(req: Request, res: Response): Promise<void> {
     try {
       let { username } = req.body
-      username = String(username) 
+      username = String(username)
 
       console.info(`Attempting to login user: ${username}`)
 
@@ -46,37 +46,25 @@ class MobileService {
       })
 
       if (!user) return
-      
+
       if (!user.clientApiKey) {
-        const wallet = await this.walletService.createWallet()
+        // const wallet = await this.walletService.createWallet()
         const clientApiKey = await this.portalApi.getClientApiKey(
-          wallet.publicKey
+          user.username
         )
         user = await this.prisma.user.update({
           data: {
-            walletId: wallet.id,
             clientApiKey,
-            address: wallet.publicKey,
           },
           where: { id: user.id },
         })
         console.info(
-          `Created a new wallet and requested an API key for ${username}`
+          `Created a new API key for ${username}`
         )
       }
-      // if (!Expo.isExpoPushToken(pushToken)) {
-      //   console.error(`Push token ${pushToken} is not a valid Expo push token`)
-      //   res
-      //     .status(400)
-      //     .send(`Push token ${pushToken} is not a valid Expo push token`)
-      //   return
-      // }
-
-      // await this.updateUserPushToken(user.exchangeUserId, pushToken)
 
       res.status(200).send({
         exchangeUserId: user.exchangeUserId,
-        address: user.address, // maybe we dont need to send the address back
         clientApiKey: user.clientApiKey,
       })
     } catch (error) {
@@ -93,8 +81,8 @@ class MobileService {
    */
   async signUp(req: any, res: any): Promise<void> {
     try {
-      let { username } = req.body 
-      username = String(username) 
+      let { username } = req.body
+      username = String(username)
       console.info(`Querying for user: ${username}`)
       const existingUser = await this.getUserByUsername(username).catch(
         (error) => {
@@ -126,56 +114,23 @@ class MobileService {
         return
       }
 
-      console.info(`Calling wallet service to create wallet`)
-      const wallet = await this.walletService.createWallet()
+      console.info(`Calling portal to create a client api key`)
       const clientApiKey = await this.portalApi.getClientApiKey(
-        wallet.publicKey
+        username
       )
       const user = await this.prisma.user.create({
         data: {
           exchangeUserId,
-          walletId: wallet.id,
           username,
           clientApiKey,
-          address: wallet.publicKey,
         },
       })
 
-      // let expo = new Expo({ accessToken: process.env.EXPO_ACCESS_TOKEN })
-
-      // if (!Expo.isExpoPushToken(pushToken)) {
-      //   console.error(`Push token ${pushToken} is not a valid Expo push token`)
-      //   res
-      //     .status(400)
-      //     .send(`Push token ${pushToken} is not a valid Expo push token`)
-      //   return
-      // }
-
-      console.info(
-        `Successfully created a new portal wallet at ${wallet.publicKey}`
-      )
-
-      console.info(
-        `Transferring funds to new wallet ${wallet.publicKey} from hot wallet at ${this.exchangeService.address}`
-      )
-      await this.transferExchangeFunds(wallet.publicKey, INIT_AMOUNT, 4)
-
-      // await expo.sendPushNotificationsAsync([
-      //   {
-      //     to: pushToken,
-      //     sound: 'default',
-      //     title: 'Mock Exchange',
-      //     body: 'You enabled your Portal Wallet!',
-      //     data: {
-      //       message: `We have initiated a transfer of ${INIT_AMOUNT} to be deposited into your new portal wallet!`,
-      //     },
-      //   },
-      // ])
 
       console.info(`Successfully signed up ${exchangeUserId}`)
       res
         .status(200)
-        .send({ exchangeUserId: user.exchangeUserId, address: user.address, clientApiKey: user.clientApiKey })
+        .send({ exchangeUserId: user.exchangeUserId, clientApiKey: user.clientApiKey })
     } catch (error) {
       console.error(error)
       res.status(500).send('Unknown server error')
@@ -198,43 +153,18 @@ class MobileService {
     }
 
     console.info(`Calling wallet service to create wallet`)
-    const wallet = await this.walletService.createWallet()
     const clientApiKey = await this.portalApi.getClientApiKey(
-      wallet.publicKey
+      username
     )
     const user = await this.prisma.user.create({
       data: {
         exchangeUserId,
-        walletId: wallet.id,
         username,
         clientApiKey,
-        address: wallet.publicKey,
       },
     })
 
     return user
-  }
-
-  /*
-   * Updates the pushToken for a user. Throws an error if use doesnt exist
-   */
-  async addPushToken(req: any, res: any): Promise<void> {
-    try {
-      const exchangeUserId = Number(req.params['exchangeUserId'])
-      const pushToken = req.body['pushToken']
-
-      const user = await this.updateUserPushToken(exchangeUserId, pushToken)
-
-      console.info(
-        `Successfully received push token ${user.pushToken} for ${user.exchangeUserId}`
-      )
-      res
-        .status(200)
-        .send(`Successfully received push token for ${user.exchangeUserId}`)
-    } catch (error) {
-      console.error(error)
-      res.status(500).send('Unknown server error')
-    }
   }
 
   /*
@@ -261,21 +191,22 @@ class MobileService {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const amount = Number(req.body['amount'])
       const chainId = Number(req.body['chainId'])
+      const address = req.body['address']
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
-      if (!user.address) {
-        throw new Error(`User ${exchangeUserId} does not have an address.`)
-      }
+      // if (!user.address) {
+      //   throw new Error(`User ${exchangeUserId} does not have an address.`)
+      // }
 
       console.log(
-        `Transferring ${amount} ETH into ${user.address} (user: ${user.exchangeUserId})`
+        `Transferring ${amount} ETH into ${address} (user: ${user.exchangeUserId})`
       )
-      await this.transferExchangeFunds(user.address, amount, chainId)
+      await this.transferExchangeFunds(address, amount, chainId)
 
 
       console.info(
-        `Successfully submitted transfer for ${amount} ETH into ${user.address} (user: ${user.exchangeUserId})`
+        `Successfully submitted transfer for ${amount} ETH into ${address} (user: ${user.exchangeUserId})`
       )
       res
         .status(200)
@@ -298,7 +229,7 @@ class MobileService {
       }
       const chainId = Number(req.query['chainId'])
 
-      const cache = await this.prisma.exchangeBalance.findFirst({where: {chainId}})
+      const cache = await this.prisma.exchangeBalance.findFirst({ where: { chainId } })
       let balance = cache?.cachedBalance
 
       if (!balance) {
@@ -415,27 +346,6 @@ class MobileService {
     return user
   }
 
-  /*
-   * updates push token for a specific exchange user.
-   */
-  private async updateUserPushToken(exchangeUserId: number, pushToken: string) {
-    let id = Number(exchangeUserId)
-    console.info(`Querying for exchangeUserId: ${id}`)
-    const user = await this.prisma.user.findFirst({
-      where: { exchangeUserId: id },
-    })
-
-    if (!user) {
-      throw new Error('Tried to update a user that doesnt exist')
-    } else {
-      const updatedUser = await this.prisma.user.update({
-        where: { id: user.id },
-        data: { pushToken },
-      })
-      console.info(`Updated user`, updatedUser.pushToken)
-      return updatedUser
-    }
-  }
 
   /*
    * Transfers an amount of funds from the omnibus to a specific "to" address.

@@ -9,7 +9,7 @@ datasource db {
 
 model User {
   id             Int     @id @default(autoincrement())
-  walletId       String
+  walletId       String?
   exchangeUserId Int
   clientApiKey   String?
   username       String

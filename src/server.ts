@@ -13,7 +13,7 @@ import { PrismaClient } from '@prisma/client'
 import HotWalletService from './services/HotWalletService'
 import WalletService from './services/WalletService'
 import { EXCHANGE_WALLET_ADDRESS, EXCHANGE_WALLET_PRIVATE_KEY } from './config'
-import { Wallet as EthersWallet } from 'ethers'
+import { ethers, Wallet as EthersWallet } from 'ethers'
 import { signTypedData_v4 } from "eth-sig-util";
 
 const app: Application = express()
@@ -50,21 +50,10 @@ app.post(
   }
 )
 
-app.get('/mobile/:exchangeUserId/address', async (req: any, res: any) => {
-  await mobileService.sendAddress(req, res)
-})
-
-app.post('/mobile/:exchangeUserId/token', async (req: any, res: any) => {
-  await mobileService.addPushToken(req, res)
-})
-
 app.post('/mobile/:exchangeUserId/transfer', async (req: any, res: any) => {
   await mobileService.transferFunds(req, res)
 })
 
-app.get('/mobile/:exchangeUserId/walletId', async (req: any, res: any) => {
-  await mobileService.sendWalletId(req, res)
-})
 
 app.post('/webhook', async (req, res) => {
   try {    

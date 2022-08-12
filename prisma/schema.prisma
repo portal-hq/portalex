@@ -12,6 +12,7 @@ model User {
   walletId       String?
   exchangeUserId Int
   clientApiKey   String?
+  backupShare    String?
   username       String
   apiSecret      String?
   apiKey         String?

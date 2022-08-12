@@ -11,14 +11,13 @@ class PortalApi {
    *
    * @returns clientApiKey
    */
-  async getClientApiKey(address: string): Promise<string> {
+  async getClientApiKey(username: string): Promise<string> {
     console.info(
-      `Requesting Client API Key from Connect API for address: ${address}`
+      `Requesting Client API Key from Connect API for user: ${username}`
     )
     return await axios
       .post(
         `${PORTAL_API_URL}/api/clients`,
-        { address },
         {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,

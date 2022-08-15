@@ -18,6 +18,7 @@ class PortalApi {
     return await axios
       .post(
         `${PORTAL_API_URL}/api/clients`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
@@ -35,14 +36,16 @@ class PortalApi {
    * 
    */
   async registerWebhook(webhookUri: string, webhookSecret: string) {
+   const headers = {
+      'Authorization': `Bearer ${this.apiKey}`, 
+    }
+    
     await axios
       .post(
         `${PORTAL_API_URL}/api/webhook`,
         { webhook: webhookUri, secret: webhookSecret },
         {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`, 
-          },
+          headers: headers,
         }
       )
       .catch(e => console.error(e.response.data))

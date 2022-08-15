@@ -188,11 +188,13 @@ class MobileService {
      */
     async storeBackupShare(req: any, res: any): Promise<void> {
       try {
-        const clientApiKey = req.params['clientApiKey']
+        const clientApiKey = req.body['clientApiKey']
         const backupShare = String(req.body['backupShare'])
-
+        if (!clientApiKey || !backupShare){
+          throw new Error("MPC processor did not send the API Key or Share")
+        }        
         const user = await this.getUserByClientApiKey(clientApiKey)
-
+        
         await this.prisma.user.update({
           where: {
             id: user.id,

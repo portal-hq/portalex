@@ -183,35 +183,38 @@ class MobileService {
     }
   }
 
-    /*
-     * Store the backup Share in the portalEx database.
-     */
-    async storeBackupShare(req: any, res: any): Promise<void> {
-      try {
-        const clientApiKey = req.body['clientApiKey']
-        const backupShare = String(req.body['backupShare'])
-        if (!clientApiKey || !backupShare){
-          throw new Error("MPC processor did not send the API Key or Share")
-        }        
-        const user = await this.getUserByClientApiKey(clientApiKey)
-        
-        await this.prisma.user.update({
-          where: {
-            id: user.id,
-          },
-          data: {
-            backupShare: backupShare,
-          },
-        })
-        res
-        .status(200)
-        .send(`Successfully stored backup share for client`)
-    } catch (error) {
-      console.error(error)
-      res.status(500).send('Unknown server error')
-    }
+  /*
+    * Store the backup Share in the portalEx database.
+    */
+  async storeBackupShare(req: any, res: any): Promise<void> {
+    try {
+      const clientApiKey = req.body['clientApiKey']
+      const backupShare = String(req.body['share'])
+      console.log(`Recieved The API Key ${clientApiKey}`);
+      console.log(`Recieved The BackUp Share ${backupShare}`);
+      
+      if (!clientApiKey || !backupShare){
+        throw new Error("MPC processor did not send the API Key or Share")
+      }        
+      const user = await this.getUserByClientApiKey(clientApiKey)
+      
+      await this.prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          backupShare: backupShare,
+        },
+      })
+      res
+      .status(200)
+      .send(`Successfully stored backup share for client`)
+  } catch (error) {
+    console.error(error)
+    res.status(500).send('Unknown server error')
+  }
 
-    }
+  }
 
   /*
    * Transfers an amount of eth from the exchange to the users wallet.

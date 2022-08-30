@@ -15,6 +15,7 @@ import WalletService from './services/WalletService'
 import { EXCHANGE_WALLET_ADDRESS, EXCHANGE_WALLET_PRIVATE_KEY } from './config'
 import { ethers, Wallet as EthersWallet } from 'ethers'
 import { signTypedData_v4 } from "eth-sig-util";
+import { authMiddleware } from 'libs/auth'
 
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
@@ -54,15 +55,15 @@ app.post('/mobile/:exchangeUserId/transfer', async (req: any, res: any) => {
   await mobileService.transferFunds(req, res)
 })
 
-app.post('/webhook/fetch', async (req: any, res: any) => {
+app.post('/webhook/fetch', authMiddleware, async (req: any, res: any) => {
   await mobileService.getBackupShare(req, res)
 })
 
-app.post('/webhook/backup', async (req: any, res: any) => {
+app.post('/webhook/backup', authMiddleware, async (req: any, res: any) => {
   await mobileService.storeBackupShare(req, res)
 })
 
-app.post('/webhook', async (req, res) => {
+app.post('/webhook', authMiddleware, async (req, res) => {
   try {    
     if (req.body?.method === 'signMessage') {
       const { message, address } = req.body

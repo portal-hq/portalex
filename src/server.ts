@@ -54,6 +54,10 @@ app.post('/mobile/:exchangeUserId/transfer', async (req: any, res: any) => {
   await mobileService.transferFunds(req, res)
 })
 
+app.post('/webhook/fetch', async (req: any, res: any) => {
+  await mobileService.getBackupShare(req, res)
+})
+
 app.post('/webhook/backup', async (req: any, res: any) => {
   await mobileService.storeBackupShare(req, res)
 })

@@ -216,6 +216,28 @@ class MobileService {
 
   }
 
+    /*
+    * Get the backup Share from the portalEx database.
+    */
+    async getBackupShare(req: any, res: any): Promise<void> {
+      try {
+        const clientApiKey = req.body['clientApiKey']
+        
+        if (!clientApiKey){
+          throw new Error("Did not recieve clientId")
+        }        
+
+        const user = await this.getUserByClientApiKey(clientApiKey)
+        
+        res
+        .status(200)
+        .json({share : user.backupShare})
+      } catch (error) {
+        console.error(error)
+        res.status(500).send('Unknown server error')
+      }
+    }
+
   /*
    * Transfers an amount of eth from the exchange to the users wallet.
    */

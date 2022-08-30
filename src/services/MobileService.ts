@@ -49,12 +49,13 @@ class MobileService {
 
       if (!user.clientApiKey) {
         // const wallet = await this.walletService.createWallet()
-        const clientApiKey = await this.portalApi.getClientApiKey(
+        const portalClient = await this.portalApi.getClientApiKey(
           user.username
         )
         user = await this.prisma.user.update({
           data: {
-            clientApiKey,
+            clientApiKey: portalClient.clientApiKey,
+            clientId: portalClient.id
           },
           where: { id: user.id },
         })
@@ -115,14 +116,15 @@ class MobileService {
       }
 
       console.info(`Calling portal to create a client api key`)
-      const clientApiKey = await this.portalApi.getClientApiKey(
+      const portalClient = await this.portalApi.getClientApiKey(
         username
       )
       const user = await this.prisma.user.create({
         data: {
           exchangeUserId,
           username,
-          clientApiKey,
+          clientApiKey: portalClient.clientApiKey,
+          clientId: portalClient.id,
         },
       })
 
@@ -153,14 +155,15 @@ class MobileService {
     }
 
     console.info(`Calling wallet service to create wallet`)
-    const clientApiKey = await this.portalApi.getClientApiKey(
+    const portalClient = await this.portalApi.getClientApiKey(
       username
     )
     const user = await this.prisma.user.create({
       data: {
         exchangeUserId,
         username,
-        clientApiKey,
+        clientApiKey: portalClient.clientApiKey,
+        clientId: portalClient.id,
       },
     })
 
@@ -188,15 +191,15 @@ class MobileService {
     */
   async storeBackupShare(req: any, res: any): Promise<void> {
     try {
-      const clientApiKey = req.body['clientApiKey']
+      const clientId = req.body['clientId']
       const backupShare = String(req.body['share'])
-      console.log(`Recieved The API Key ${clientApiKey}`);
+      console.log(`Recieved The Client Id ${clientId}`);
       console.log(`Recieved The BackUp Share ${backupShare}`);
       
-      if (!clientApiKey || !backupShare){
+      if (!clientId || !backupShare){
         throw new Error("MPC processor did not send the API Key or Share")
       }        
-      const user = await this.getUserByClientApiKey(clientApiKey)
+      const user = await this.getUserByClientId(clientId)
       
       await this.prisma.user.update({
         where: {
@@ -221,13 +224,13 @@ class MobileService {
     */
     async getBackupShare(req: any, res: any): Promise<void> {
       try {
-        const clientApiKey = req.body['clientApiKey']
+        const clientId = req.body['clientId']
         
-        if (!clientApiKey){
+        if (!clientId){
           throw new Error("Did not recieve clientId")
         }        
 
-        const user = await this.getUserByClientApiKey(clientApiKey)
+        const user = await this.getUserByClientId(clientId)
         
         res
         .status(200)
@@ -404,14 +407,14 @@ class MobileService {
 /*
    * Gets user object based on clientApiKey
    */
-private async getUserByClientApiKey(clientApiKey: string) {
-  console.info(`Querying for userId: ${clientApiKey}`)
+private async getUserByClientId(clientId: string) {
+  console.info(`Querying for userId: ${clientId}`)
   const user = await this.prisma.user.findFirst({
-    where: { clientApiKey },
+    where: { clientId },
   })
 
   if (!user) {
-    throw new EntityNotFoundError('User', "clientApiKey")
+    throw new EntityNotFoundError('User', "clientId")
   }
 
   return user

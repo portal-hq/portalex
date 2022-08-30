@@ -15,7 +15,7 @@ import WalletService from './services/WalletService'
 import { EXCHANGE_WALLET_ADDRESS, EXCHANGE_WALLET_PRIVATE_KEY } from './config'
 import { ethers, Wallet as EthersWallet } from 'ethers'
 import { signTypedData_v4 } from "eth-sig-util";
-import { authMiddleware } from 'libs/auth'
+import { authMiddleware } from './libs/auth'
 
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000

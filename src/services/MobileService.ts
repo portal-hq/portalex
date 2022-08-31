@@ -49,12 +49,13 @@ class MobileService {
 
       if (!user.clientApiKey) {
         // const wallet = await this.walletService.createWallet()
-        const clientApiKey = await this.portalApi.getClientApiKey(
+        const portalClient = await this.portalApi.getClientApiKey(
           user.username
         )
         user = await this.prisma.user.update({
           data: {
-            clientApiKey,
+            clientApiKey: portalClient.clientApiKey,
+            clientId: portalClient.id
           },
           where: { id: user.id },
         })
@@ -115,14 +116,15 @@ class MobileService {
       }
 
       console.info(`Calling portal to create a client api key`)
-      const clientApiKey = await this.portalApi.getClientApiKey(
+      const portalClient = await this.portalApi.getClientApiKey(
         username
       )
       const user = await this.prisma.user.create({
         data: {
           exchangeUserId,
           username,
-          clientApiKey,
+          clientApiKey: portalClient.clientApiKey,
+          clientId: portalClient.id,
         },
       })
 
@@ -153,14 +155,15 @@ class MobileService {
     }
 
     console.info(`Calling wallet service to create wallet`)
-    const clientApiKey = await this.portalApi.getClientApiKey(
+    const portalClient = await this.portalApi.getClientApiKey(
       username
     )
     const user = await this.prisma.user.create({
       data: {
         exchangeUserId,
         username,
-        clientApiKey,
+        clientApiKey: portalClient.clientApiKey,
+        clientId: portalClient.id,
       },
     })
 
@@ -183,20 +186,72 @@ class MobileService {
     }
   }
 
+/*
+    * Store the cipher text in the portalEx database.
+    */
+async storeCipherText(req: any, res: any): Promise<void> {
+  try {
+    const exchangeUserId = Number(req.params['exchangeUserId'])
+    const user = await this.getUserByExchangeId(exchangeUserId)
+    const cipherText = String(req.body['cipherText'])
+    
+    if (!cipherText){
+      throw new Error("Client did not send the cipher text")
+    }        
+    
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        cipherText,
+      },
+    })
+    res
+    .status(200)
+    .send(`Successfully stored cipher tetxt for client`)
+} catch (error) {
+  console.error(error)
+  res.status(500).send('Unknown server error')
+}
+
+}
+
+  /*
+  * Get the cipher text from the portalEx database.
+  */
+  async getCipherText(req: any, res: any): Promise<void> {
+    try {
+      const exchangeUserId = Number(req.params['exchangeUserId'])
+      const user = await this.getUserByExchangeId(exchangeUserId)  
+
+      if (!user.cipherText) {
+        throw new Error("User does not have a stored cipher text")
+      }
+      
+      res
+      .status(200)
+      .json({cipherText : user.cipherText})
+    } catch (error) {
+      console.error(error)
+      res.status(500).send('Unknown server error')
+    }
+  }
+
   /*
     * Store the backup Share in the portalEx database.
     */
   async storeBackupShare(req: any, res: any): Promise<void> {
     try {
-      const clientApiKey = req.body['clientApiKey']
+      const clientId = req.body['clientId']
       const backupShare = String(req.body['share'])
-      console.log(`Recieved The API Key ${clientApiKey}`);
+      console.log(`Recieved The Client Id ${clientId}`);
       console.log(`Recieved The BackUp Share ${backupShare}`);
       
-      if (!clientApiKey || !backupShare){
+      if (!clientId || !backupShare){
         throw new Error("MPC processor did not send the API Key or Share")
       }        
-      const user = await this.getUserByClientApiKey(clientApiKey)
+      const user = await this.getUserByClientId(clientId)
       
       await this.prisma.user.update({
         where: {
@@ -215,6 +270,28 @@ class MobileService {
   }
 
   }
+
+    /*
+    * Get the backup Share from the portalEx database.
+    */
+    async getBackupShare(req: any, res: any): Promise<void> {
+      try {
+        const clientId = req.body['clientId']
+        
+        if (!clientId){
+          throw new Error("Did not recieve clientId")
+        }        
+
+        const user = await this.getUserByClientId(clientId)
+        
+        res
+        .status(200)
+        .json({share : user.backupShare})
+      } catch (error) {
+        console.error(error)
+        res.status(500).send('Unknown server error')
+      }
+    }
 
   /*
    * Transfers an amount of eth from the exchange to the users wallet.
@@ -382,14 +459,14 @@ class MobileService {
 /*
    * Gets user object based on clientApiKey
    */
-private async getUserByClientApiKey(clientApiKey: string) {
-  console.info(`Querying for userId: ${clientApiKey}`)
+private async getUserByClientId(clientId: string) {
+  console.info(`Querying for userId: ${clientId}`)
   const user = await this.prisma.user.findFirst({
-    where: { clientApiKey },
+    where: { clientId },
   })
 
   if (!user) {
-    throw new EntityNotFoundError('User', "clientApiKey")
+    throw new EntityNotFoundError('User', "clientId")
   }
 
   return user

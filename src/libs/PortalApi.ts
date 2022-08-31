@@ -3,7 +3,7 @@ import {
   PORTAL_API_URL,
 } from '../config'
 
-type portalClientResponse = {
+type PortalClientResponse = {
   id: string;
   clientApiKey: string;
 };
@@ -16,7 +16,7 @@ class PortalApi {
    *
    * @returns clientApiKey
    */
-  async getClientApiKey(username: string): Promise<portalClientResponse> {
+  async getClientApiKey(username: string): Promise<PortalClientResponse> {
     console.info(
       `Requesting Client API Key from Connect API for user: ${username}`
     )

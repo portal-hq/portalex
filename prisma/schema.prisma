@@ -7,15 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Webhook {
-  id         String @id @default(cuid())
-  secret     String
-}
 
 model User {
   id             Int     @id @default(autoincrement())
   walletId       String?
   exchangeUserId Int
+  cipherText     String?
   clientApiKey   String?
   clientId       String?
   backupShare    String?

@@ -55,6 +55,14 @@ app.post('/mobile/:exchangeUserId/transfer', async (req: any, res: any) => {
   await mobileService.transferFunds(req, res)
 })
 
+app.get('/mobile/:exchangeUserId/cipher-text/fetch', async (req: any, res: any) => {
+  await mobileService.getCipherText(req, res)
+})
+
+app.post('/mobile/:exchangeUserId/cipher-text', async (req: any, res: any) => {
+  await mobileService.storeCipherText(req, res)
+})
+
 app.post('/webhook/backup/fetch', authMiddleware, async (req: any, res: any) => {
   await mobileService.getBackupShare(req, res)
 })

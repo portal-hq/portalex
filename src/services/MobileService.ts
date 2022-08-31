@@ -186,6 +186,58 @@ class MobileService {
     }
   }
 
+/*
+    * Store the cipher text in the portalEx database.
+    */
+async storeCipherText(req: any, res: any): Promise<void> {
+  try {
+    const exchangeUserId = Number(req.params['exchangeUserId'])
+    const user = await this.getUserByExchangeId(exchangeUserId)
+    const cipherText = String(req.body['cipherText'])
+    
+    if (!cipherText){
+      throw new Error("Client did not send the cipher text")
+    }        
+    
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        cipherText,
+      },
+    })
+    res
+    .status(200)
+    .send(`Successfully stored cipher tetxt for client`)
+} catch (error) {
+  console.error(error)
+  res.status(500).send('Unknown server error')
+}
+
+}
+
+  /*
+  * Get the cipher text from the portalEx database.
+  */
+  async getCipherText(req: any, res: any): Promise<void> {
+    try {
+      const exchangeUserId = Number(req.params['exchangeUserId'])
+      const user = await this.getUserByExchangeId(exchangeUserId)  
+
+      if (!user.cipherText) {
+        throw new Error("User does not have a stored cipher text")
+      }
+      
+      res
+      .status(200)
+      .json({cipherText : user.cipherText})
+    } catch (error) {
+      console.error(error)
+      res.status(500).send('Unknown server error')
+    }
+  }
+
   /*
     * Store the backup Share in the portalEx database.
     */

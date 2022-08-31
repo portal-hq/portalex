@@ -55,7 +55,7 @@ app.post('/mobile/:exchangeUserId/transfer', async (req: any, res: any) => {
   await mobileService.transferFunds(req, res)
 })
 
-app.post('/webhook/fetch', authMiddleware, async (req: any, res: any) => {
+app.post('/webhook/backup/fetch', authMiddleware, async (req: any, res: any) => {
   await mobileService.getBackupShare(req, res)
 })
 

@@ -320,7 +320,7 @@ class MobileService {
       )
       res
         .status(200)
-        .send({ txHash })
+        .json({ txHash })
     } catch (error) {
       console.error(error)
       res.status(500).send('Unknown server error')

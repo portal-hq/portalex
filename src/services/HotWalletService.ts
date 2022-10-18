@@ -47,7 +47,7 @@ class HotWalletService {
       amount = Math.abs(amount)
 
       const toBalance = await provider.getBalance(to)
-      if (toBalance.lt(utils.parseEther(amount.toString())) ) {
+      if (toBalance.lt(utils.parseEther(amount.toString()))) {
         throw new Error(`Address ${to} does not have a high enough balance (${toBalance} to transfer ${amount} eth out`)
       }
 
@@ -65,14 +65,13 @@ class HotWalletService {
       gasPrice,
     }
 
-    await wallet
+    return await wallet
       .sendTransaction(tx)
       .then((res) => {
         console.info(`Transaction submitted: ${res.hash}`)
+        return res.hash
       })
       .catch(console.error)
-
-    return 200
   }
 }
 export default HotWalletService

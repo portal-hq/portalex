@@ -186,36 +186,36 @@ class MobileService {
     }
   }
 
-/*
-    * Store the cipher text in the portalEx database.
-    */
-async storeCipherText(req: any, res: any): Promise<void> {
-  try {
-    const exchangeUserId = Number(req.params['exchangeUserId'])
-    const user = await this.getUserByExchangeId(exchangeUserId)
-    const cipherText = String(req.body['cipherText'])
-    
-    if (!cipherText){
-      throw new Error("Client did not send the cipher text")
-    }        
-    
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        cipherText,
-      },
-    })
-    res
-    .status(200)
-    .send(`Successfully stored cipher tetxt for client`)
-} catch (error) {
-  console.error(error)
-  res.status(500).send('Unknown server error')
-}
+  /*
+      * Store the cipher text in the portalEx database.
+      */
+  async storeCipherText(req: any, res: any): Promise<void> {
+    try {
+      const exchangeUserId = Number(req.params['exchangeUserId'])
+      const user = await this.getUserByExchangeId(exchangeUserId)
+      const cipherText = String(req.body['cipherText'])
 
-}
+      if (!cipherText) {
+        throw new Error("Client did not send the cipher text")
+      }
+
+      await this.prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          cipherText,
+        },
+      })
+      res
+        .status(200)
+        .send(`Successfully stored cipher tetxt for client`)
+    } catch (error) {
+      console.error(error)
+      res.status(500).send('Unknown server error')
+    }
+
+  }
 
   /*
   * Get the cipher text from the portalEx database.
@@ -223,15 +223,15 @@ async storeCipherText(req: any, res: any): Promise<void> {
   async getCipherText(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
-      const user = await this.getUserByExchangeId(exchangeUserId)  
+      const user = await this.getUserByExchangeId(exchangeUserId)
 
       if (!user.cipherText) {
         throw new Error("User does not have a stored cipher text")
       }
-      
+
       res
-      .status(200)
-      .json({cipherText : user.cipherText})
+        .status(200)
+        .json({ cipherText: user.cipherText })
     } catch (error) {
       console.error(error)
       res.status(500).send('Unknown server error')
@@ -247,12 +247,12 @@ async storeCipherText(req: any, res: any): Promise<void> {
       const backupShare = String(req.body['share'])
       console.log(`Recieved The Client Id ${clientId}`);
       console.log(`Recieved The BackUp Share ${backupShare}`);
-      
-      if (!clientId || !backupShare){
+
+      if (!clientId || !backupShare) {
         throw new Error("MPC processor did not send the API Key or Share")
-      }        
+      }
       const user = await this.getUserByClientId(clientId)
-      
+
       await this.prisma.user.update({
         where: {
           id: user.id,
@@ -262,36 +262,36 @@ async storeCipherText(req: any, res: any): Promise<void> {
         },
       })
       res
-      .status(200)
-      .send(`Successfully stored backup share for client`)
-  } catch (error) {
-    console.error(error)
-    res.status(500).send('Unknown server error')
-  }
-
-  }
-
-    /*
-    * Get the backup Share from the portalEx database.
-    */
-    async getBackupShare(req: any, res: any): Promise<void> {
-      try {
-        const clientId = req.body['clientId']
-        
-        if (!clientId){
-          throw new Error("Did not recieve clientId")
-        }        
-
-        const user = await this.getUserByClientId(clientId)
-        
-        res
         .status(200)
-        .json({share : user.backupShare})
-      } catch (error) {
-        console.error(error)
-        res.status(500).send('Unknown server error')
-      }
+        .send(`Successfully stored backup share for client`)
+    } catch (error) {
+      console.error(error)
+      res.status(500).send('Unknown server error')
     }
+
+  }
+
+  /*
+  * Get the backup Share from the portalEx database.
+  */
+  async getBackupShare(req: any, res: any): Promise<void> {
+    try {
+      const clientId = req.body['clientId']
+
+      if (!clientId) {
+        throw new Error("Did not recieve clientId")
+      }
+
+      const user = await this.getUserByClientId(clientId)
+
+      res
+        .status(200)
+        .json({ share: user.backupShare })
+    } catch (error) {
+      console.error(error)
+      res.status(500).send('Unknown server error')
+    }
+  }
 
   /*
    * Transfers an amount of eth from the exchange to the users wallet.
@@ -312,7 +312,7 @@ async storeCipherText(req: any, res: any): Promise<void> {
       console.log(
         `Transferring ${amount} ETH into ${address} (user: ${user.exchangeUserId})`
       )
-      await this.transferExchangeFunds(address, amount, chainId)
+      const txHash = await this.transferExchangeFunds(address, amount, chainId)
 
 
       console.info(
@@ -320,7 +320,7 @@ async storeCipherText(req: any, res: any): Promise<void> {
       )
       res
         .status(200)
-        .send(`Successfully transferred funds for ${exchangeUserId}`)
+        .send({ txHash })
     } catch (error) {
       console.error(error)
       res.status(500).send('Unknown server error')
@@ -456,21 +456,21 @@ async storeCipherText(req: any, res: any): Promise<void> {
     return user
   }
 
-/*
-   * Gets user object based on clientApiKey
-   */
-private async getUserByClientId(clientId: string) {
-  console.info(`Querying for userId: ${clientId}`)
-  const user = await this.prisma.user.findFirst({
-    where: { clientId },
-  })
+  /*
+     * Gets user object based on clientApiKey
+     */
+  private async getUserByClientId(clientId: string) {
+    console.info(`Querying for userId: ${clientId}`)
+    const user = await this.prisma.user.findFirst({
+      where: { clientId },
+    })
 
-  if (!user) {
-    throw new EntityNotFoundError('User', "clientId")
+    if (!user) {
+      throw new EntityNotFoundError('User', "clientId")
+    }
+
+    return user
   }
-
-  return user
-}  
 
   /*
    * Transfers an amount of funds from the omnibus to a specific "to" address.
@@ -488,9 +488,12 @@ private async getUserByClientId(clientId: string) {
       )
     }
 
-    this.exchangeService
+    return this.exchangeService
       .sendTransaction(to, amount, chainId)
-      .then((res: any) => console.info(`Transaction submitted status: ${res}`))
+      .then((txHash: string) => {
+        console.info(`Transaction submitted, txHash: ${txHash}`)
+        return txHash
+      })
       .catch(console.error)
   }
 }

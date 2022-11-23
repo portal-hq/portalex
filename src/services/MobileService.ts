@@ -286,7 +286,7 @@ class MobileService {
 
       res
         .status(200)
-        .json({ share: user.backupShare })
+        .json({ backupShare: user.backupShare })
     } catch (error) {
       console.error(error)
       res.status(500).send('Unknown server error')

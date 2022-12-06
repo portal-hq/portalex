@@ -1,0 +1,172 @@
+{
+	"info": {
+		"_postman_id": "93c27b04-22f3-45d7-9fd4-32dbe77bd3f8",
+		"name": "PortalEx",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23484031"
+	},
+	"item": [
+		{
+			"name": "Ping",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"test\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/mobile/{{exchange_user_id}}/balance?chainId=5",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"mobile",
+						"{{exchange_user_id}}",
+						"balance"
+					],
+					"query": [
+						{
+							"key": "chainId",
+							"value": "5",
+							"description": "The chainId to check the balance of"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Signup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"test\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/mobile/signup",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"mobile",
+						"signup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"test\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/mobile/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"mobile",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Balance",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"test\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/mobile/{{exchange_user_id}}/balance?chainId=5",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"mobile",
+						"{{exchange_user_id}}",
+						"balance"
+					],
+					"query": [
+						{
+							"key": "chainId",
+							"value": "5",
+							"description": "The chainId to check the balance of"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "exchange_user_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

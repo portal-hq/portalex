@@ -1,13 +1,10 @@
 import {
   CUSTODIAN_API_KEY,
-  INIT_AMOUNT,
 } from '../config'
 import { isAddress } from 'ethers/lib/utils'
-import { Expo, ExpoPushMessage } from 'expo-server-sdk'
 import { PrismaClient, User } from '@prisma/client'
 import { Request, Response } from 'express'
-import { EntityNotFoundError } from '../libs/errors'
-import WalletService from './WalletService'
+import { EntityNotFoundError, HttpError, MissingParameterError } from '../libs/errors'
 import PortalApi from '../libs/PortalApi'
 import { Decimal } from '@prisma/client/runtime'
 
@@ -31,8 +28,11 @@ class MobileService {
   async login(req: Request, res: Response): Promise<void> {
     try {
       let { username } = req.body
-      username = String(username)
+      if (!username || username === "") {
+        throw new MissingParameterError('username')
+      }
 
+      username = String(username)
       console.info(`Attempting to login user: ${username}`)
 
       let user = await this.getUserByUsername(username).catch((error) => {
@@ -69,6 +69,11 @@ class MobileService {
         clientApiKey: user.clientApiKey,
       })
     } catch (error) {
+      if (error instanceof HttpError) {
+        res.status(error.HttpStatus).send(error.message)
+        return
+      }
+
       console.error(error)
       res.status(500).send('Unknown server error')
     }
@@ -83,8 +88,12 @@ class MobileService {
   async signUp(req: any, res: any): Promise<void> {
     try {
       let { username } = req.body
+      if (!username || username === "") {
+        throw new MissingParameterError('username')
+      }
+
       username = String(username)
-      console.info(`Querying for user: ${username}`)
+
       const existingUser = await this.getUserByUsername(username).catch(
         (error) => {
           if (error instanceof EntityNotFoundError) {
@@ -133,9 +142,14 @@ class MobileService {
       res
         .status(200)
         .send({ exchangeUserId: user.exchangeUserId, clientApiKey: user.clientApiKey })
-    } catch (error) {
+    } catch (error: any) {
+      if (error instanceof HttpError) {
+        res.status(error.HttpStatus).send(error.message)
+        return
+      }
+
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).send(error.message)
     }
   }
 
@@ -279,7 +293,7 @@ class MobileService {
       const clientId = req.body['clientId']
 
       if (!clientId) {
-        throw new Error("Did not recieve clientId")
+        throw new Error("Did not receive clientId")
       }
 
       const user = await this.getUserByClientId(clientId)

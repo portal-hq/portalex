@@ -35,6 +35,9 @@ const walletService = new WalletService(prisma)
 app.use(bodyPaser.json())
 app.use(morgan('tiny'))
 
+app.get('/ping', async(req: any, res: any) => {
+  res.status(200).send('pong')
+})
 app.post('/mobile/signup', async (req: any, res: any) => {
   await mobileService.signUp(req, res)
 })

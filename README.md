@@ -1,7 +1,9 @@
 
 # PortalEx
 
-An Express REST API that mocks a minimal implementation of a centralized exchange to demonstrate how to integrate Portal.
+An example that mocks a minimal implementation of a centralized exchange to demonstrate how to integrate Portal.
+
+For documentation on how to use and setup Portal see our docs at [docs.portalhq.io](https://docs.portalhq.io/).
 
 ## Dependencies
 
@@ -31,7 +33,21 @@ docker-compose up
 
 You should now have started a postgres dn and with a node server. The server is running at `localhost:3000`.
 
-You can test this by creating a new user:
+You can test this by hitting the `/ping` endpoint:
+
+```
+curl \
+  -X POST \
+   -H "Content-Type: application/json" \
+  localhost:3000/pong
+```
+
+Which should return a `200` with the message `pong`.
+
+There is also a [Postman configuration file](./PortalEx.postman_collection.json) you can import if you prefer to use that over cURL.
+## Creating a new user
+
+To test the Portal API create a new user:
 
 ```
 curl \
@@ -41,15 +57,34 @@ curl \
   localhost:3000/mobile/signup
 ```
 
-## Using Ngrok 
+This will return a `clientApiKey` you can use for testing:
 
-To expose your localhost to a random public domain run:
+```
+{
+    "exchangeUserId": 619692,
+    "clientApiKey": "2basdead-ac6e-4d07-857d-459453b6158b"
+}
+```
+
+## Registering a Webhook with Ngrok
+
+To register a webhook for your custodian you need a public URL.
+
+To expose your localhost to a random public domain using ngrok run:
 
 ```
 ngrok http 3000
 ```
 
-You can use that public ngrok domain to register as webhook on Portal.
+You can use that public ngrok domain to [register as a webhook](https://docs.portalhq.io/reference/rest-api) on Portal.
+
+```
+curl \
+  -X POST \
+   -H "Content-Type: application/json" \
+   -d '{"webhook": "<YOUR_NGROK_DOMAIN>", "secret": "secret"}' \
+   https://api.portalhq.io/api/v1/custodians/webhook
+```
 
 ### Using Paid Ngrok Account
 

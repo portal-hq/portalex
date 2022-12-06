@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, {AxiosError} from 'axios'
 import {
   PORTAL_API_URL,
 } from '../config'
@@ -18,7 +18,7 @@ class PortalApi {
    */
   async getClientApiKey(username: string): Promise<PortalClientResponse> {
     console.info(
-      `Requesting Client API Key from Connect API for user: ${username}`
+      `Requesting Client API Key from Connect API for user: ${username}, ${PORTAL_API_URL}, ${this.apiKey}`
     )
     return await axios
       .post(
@@ -33,6 +33,12 @@ class PortalApi {
       .then((res) => {
         return res.data
       })
+      .catch((err: AxiosError) => {
+        throw {
+          status: err.response?.status,
+          message: `Portal API Error: ${err.response?.data['error']}`
+        }
+      })
   }
 
 
@@ -45,7 +51,7 @@ class PortalApi {
       'Authorization': `Bearer ${this.apiKey}`, 
     }
     
-    await axios
+    return axios
       .post(
         `${PORTAL_API_URL}/api/webhook`,
         { webhook: webhookUri, secret: webhookSecret },
@@ -53,7 +59,12 @@ class PortalApi {
           headers: headers,
         }
       )
-      .catch(e => console.error(e.response.data))
+      .catch((err: AxiosError) => {
+        throw {
+          status: err.response?.status,
+          message: `Portal API Error: ${err.response?.data['error']}`
+        }
+      })
   }
 }
 

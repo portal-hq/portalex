@@ -16,6 +16,7 @@ import { EXCHANGE_WALLET_ADDRESS, EXCHANGE_WALLET_PRIVATE_KEY } from './config'
 import { ethers, Wallet as EthersWallet } from 'ethers'
 import { signTypedData_v4 } from "eth-sig-util";
 import { authMiddleware } from './libs/auth'
+import morgan from 'morgan'
 
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
@@ -32,6 +33,7 @@ const mobileService: MobileService = new MobileService(prisma, exchangeService)
 const walletService = new WalletService(prisma)
 
 app.use(bodyPaser.json())
+app.use(morgan('tiny'))
 
 app.post('/mobile/signup', async (req: any, res: any) => {
   await mobileService.signUp(req, res)

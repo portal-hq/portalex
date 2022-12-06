@@ -22,6 +22,6 @@ export const chainToName = (chainId: number): string => {
   } else if (chainId === 69) {
     return 'optimism-kovan';
   } else {
-    throw new Error('Unsupported ChainId');
+    throw new Error(`Unsupported ChainId: ${chainId}`);
   }
 }; 

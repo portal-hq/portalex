@@ -15,6 +15,15 @@ export abstract class HttpError extends Error {
   }
 }
 
+export class MissingParameterError extends HttpError {
+  public static readonly Msg = 'Missing parameter: '
+  public static readonly HttpStatus = HttpStatusCodes.BAD_REQUEST
+
+  constructor(param: string) {
+    super(MissingParameterError.Msg + param, MissingParameterError.HttpStatus)
+  }
+}
+
 export class UnauthorizedError extends HttpError {
   public static readonly Msg = 'Unauthorized'
   public static readonly HttpStatus = HttpStatusCodes.UNAUTHORIZED

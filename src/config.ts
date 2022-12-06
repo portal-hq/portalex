@@ -14,7 +14,7 @@ export const PORTAL_API_URL =
 export const CUSTODIAN_API_KEY =
   process.env.CUSTODIAN_API_KEY || 'test-api-key'
 
-export const ETH_NETWORK = process.env.ETH_NETWORK || 'ropsten'
+export const ETH_NETWORK = process.env.ETH_NETWORK || 'goerli'
 
 // Used for demo script to register a webhook
 export const WEBHOOK_URL = process.env.WEBHOOK_URL || '' // need to set the host with /webhook at the end

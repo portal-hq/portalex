@@ -35,8 +35,8 @@ You can test this by hitting the `/ping` endpoint:
 
 ```
 curl \
-  -X POST \
-   -H "Content-Type: application/json" \
+  -X GET \
+  -H "Content-Type: application/json" \
   localhost:3000/ping
 ```
 

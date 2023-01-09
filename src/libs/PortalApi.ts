@@ -1,7 +1,12 @@
-import axios from 'axios'
+import axios, {AxiosError} from 'axios'
 import {
   PORTAL_API_URL,
 } from '../config'
+
+type PortalClientResponse = {
+  id: string;
+  clientApiKey: string;
+};
 
 class PortalApi {
   constructor(private apiKey: string) { }
@@ -11,14 +16,14 @@ class PortalApi {
    *
    * @returns clientApiKey
    */
-  async getClientApiKey(address: string): Promise<string> {
+  async getClientApiKey(username: string): Promise<PortalClientResponse> {
     console.info(
-      `Requesting Client API Key from Connect API for address: ${address}`
+      `Requesting Client API Key from Connect API for user: ${username}, ${PORTAL_API_URL}, ${this.apiKey}`
     )
     return await axios
       .post(
         `${PORTAL_API_URL}/api/clients`,
-        { address },
+        {},
         {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
@@ -26,7 +31,13 @@ class PortalApi {
         }
       )
       .then((res) => {
-        return res.data.clientApiKey
+        return res.data
+      })
+      .catch((err: AxiosError) => {
+        throw {
+          status: err.response?.status,
+          message: `Portal API Error: ${err.response?.data['error']}`
+        }
       })
   }
 
@@ -36,17 +47,24 @@ class PortalApi {
    * 
    */
   async registerWebhook(webhookUri: string, webhookSecret: string) {
-    await axios
+   const headers = {
+      'Authorization': `Bearer ${this.apiKey}`, 
+    }
+    
+    return axios
       .post(
         `${PORTAL_API_URL}/api/webhook`,
         { webhook: webhookUri, secret: webhookSecret },
         {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`, 
-          },
+          headers: headers,
         }
       )
-      .catch(e => console.error(e.response.data))
+      .catch((err: AxiosError) => {
+        throw {
+          status: err.response?.status,
+          message: `Portal API Error: ${err.response?.data['error']}`
+        }
+      })
   }
 }
 

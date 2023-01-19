@@ -223,7 +223,7 @@ class MobileService {
       })
       res
         .status(200)
-        .send(`Successfully stored cipher tetxt for client`)
+        .send(`Successfully stored cipher text for client`)
     } catch (error) {
       console.error(error)
       res.status(500).send('Unknown server error')

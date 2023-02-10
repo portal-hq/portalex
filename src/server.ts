@@ -45,6 +45,10 @@ app.post('/mobile/login', async (req: any, res: any) => {
   await mobileService.login(req, res)
 })
 
+app.get('/mobile/:exchangeUserId/eject', async (req: any, res: any) => {
+  await mobileService.ejectBackupShare(req, res)
+})
+
 app.get('/mobile/:exchangeUserId/balance', async (req: any, res: any) => {
   await mobileService.getExchangeBalance(req, res)
 })

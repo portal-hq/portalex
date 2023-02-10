@@ -251,6 +251,29 @@ class MobileService {
       res.status(500).send('Unknown server error')
     }
   }
+  
+  /*
+  * Get the custodian backup share to support eject.
+  */
+    async ejectBackupShare(req: any, res: any): Promise<void> {
+      try {
+        const exchangeUserId = Number(req.params['exchangeUserId'])
+        const user = await this.getUserByExchangeId(exchangeUserId)
+  
+        if (!user.backupShare) {
+          throw new Error("User does not have a backup share. Did you run backup?")
+        }
+
+        console.warn(`Ejecting the backup share for user ${user.username}`)
+  
+        res
+          .status(200)
+          .json({ share: user.backupShare })
+      } catch (error) {
+        console.error(error)
+        res.status(500).send('Unknown server error')
+      }
+    }
 
   /*
     * Store the backup Share in the portalEx database.

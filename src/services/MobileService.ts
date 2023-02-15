@@ -1,10 +1,12 @@
-import {
-  CUSTODIAN_API_KEY,
-} from '../config'
+import { CUSTODIAN_API_KEY } from '../config'
 import { isAddress } from 'ethers/lib/utils'
 import { PrismaClient, User } from '@prisma/client'
 import { Request, Response } from 'express'
-import { EntityNotFoundError, HttpError, MissingParameterError } from '../libs/errors'
+import {
+  EntityNotFoundError,
+  HttpError,
+  MissingParameterError,
+} from '../libs/errors'
 import PortalApi from '../libs/PortalApi'
 import { Decimal } from '@prisma/client/runtime'
 
@@ -17,7 +19,10 @@ interface ExchangeService {
 class MobileService {
   // private walletService: WalletService
   private portalApi: PortalApi
-  constructor(private prisma: PrismaClient, private exchangeService: ExchangeService) {
+  constructor(
+    private prisma: PrismaClient,
+    private exchangeService: ExchangeService
+  ) {
     // this.walletService = new WalletService(this.prisma)
     this.portalApi = new PortalApi(CUSTODIAN_API_KEY)
   }
@@ -28,7 +33,7 @@ class MobileService {
   async login(req: Request, res: Response): Promise<void> {
     try {
       let { username } = req.body
-      if (!username || username === "") {
+      if (!username || username === '') {
         throw new MissingParameterError('username')
       }
 
@@ -38,7 +43,9 @@ class MobileService {
       let user = await this.getUserByUsername(username).catch((error) => {
         if (error instanceof EntityNotFoundError) {
           console.error(`Failed login for user ${username}`)
-          res.status(401).send(`Could not find a user with ${username}`)
+          res
+            .status(401)
+            .json({ message: `Could not find a user with ${username}` })
           return null
         } else {
           throw error
@@ -49,33 +56,29 @@ class MobileService {
 
       if (!user.clientApiKey) {
         // const wallet = await this.walletService.createWallet()
-        const portalClient = await this.portalApi.getClientApiKey(
-          user.username
-        )
+        const portalClient = await this.portalApi.getClientApiKey(user.username)
         user = await this.prisma.user.update({
           data: {
             clientApiKey: portalClient.clientApiKey,
-            clientId: portalClient.id
+            clientId: portalClient.id,
           },
           where: { id: user.id },
         })
-        console.info(
-          `Created a new API key for ${username}`
-        )
+        console.info(`Created a new API key for ${username}`)
       }
 
-      res.status(200).send({
+      res.status(200).json({
         exchangeUserId: user.exchangeUserId,
         clientApiKey: user.clientApiKey,
       })
     } catch (error) {
       if (error instanceof HttpError) {
-        res.status(error.HttpStatus).send(error.message)
+        res.status(error.HttpStatus).json({ message: error.message })
         return
       }
 
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
   }
 
@@ -88,7 +91,7 @@ class MobileService {
   async signUp(req: any, res: any): Promise<void> {
     try {
       let { username } = req.body
-      if (!username || username === "") {
+      if (!username || username === '') {
         throw new MissingParameterError('username')
       }
 
@@ -105,7 +108,7 @@ class MobileService {
 
       if (existingUser && existingUser.clientApiKey) {
         console.info(`${username} already exists`)
-        res.status(400).send(`User already exists ${username}`)
+        res.status(400).json({ message: `User already exists ${username}` })
         return
       }
 
@@ -120,14 +123,14 @@ class MobileService {
       })
 
       if (existingExchangeUser) {
-        res.status(400).send('user already exists with user id, try again')
+        res
+          .status(400)
+          .json({ message: 'User already exists with user id, try again' })
         return
       }
 
       console.info(`Calling portal to create a client api key`)
-      const portalClient = await this.portalApi.getClientApiKey(
-        username
-      )
+      const portalClient = await this.portalApi.getClientApiKey(username)
       const user = await this.prisma.user.create({
         data: {
           exchangeUserId,
@@ -137,19 +140,19 @@ class MobileService {
         },
       })
 
-
       console.info(`Successfully signed up ${exchangeUserId}`)
-      res
-        .status(200)
-        .send({ exchangeUserId: user.exchangeUserId, clientApiKey: user.clientApiKey })
+      res.status(200).json({
+        exchangeUserId: user.exchangeUserId,
+        clientApiKey: user.clientApiKey,
+      })
     } catch (error: any) {
       if (error instanceof HttpError) {
-        res.status(error.HttpStatus).send(error.message)
+        res.status(error.HttpStatus).json({ message: error.message })
         return
       }
 
       console.error(error)
-      res.status(500).send(error.message)
+      res.status(500).json({ message: error.message })
     }
   }
 
@@ -169,9 +172,7 @@ class MobileService {
     }
 
     console.info(`Calling wallet service to create wallet`)
-    const portalClient = await this.portalApi.getClientApiKey(
-      username
-    )
+    const portalClient = await this.portalApi.getClientApiKey(username)
     const user = await this.prisma.user.create({
       data: {
         exchangeUserId,
@@ -196,13 +197,13 @@ class MobileService {
       res.status(200).json({ walletId })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
   }
 
   /*
-      * Store the cipher text in the portalEx database.
-      */
+   * Store the cipher text in the portalEx database.
+   */
   async storeCipherText(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
@@ -210,7 +211,7 @@ class MobileService {
       const cipherText = String(req.body['cipherText'])
 
       if (!cipherText) {
-        throw new Error("Client did not send the cipher text")
+        throw new Error('Client did not send the cipher text')
       }
 
       await this.prisma.user.update({
@@ -221,49 +222,44 @@ class MobileService {
           cipherText,
         },
       })
-      res
-        .status(200)
-        .send(`Successfully stored cipher text for client`)
+      res.status(200).json({ message: 'Successfully stored cipher text' })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
-
   }
 
   /*
-  * Get the cipher text from the portalEx database.
-  */
+   * Get the cipher text from the portalEx database.
+   */
   async getCipherText(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const user = await this.getUserByExchangeId(exchangeUserId)
 
       if (!user.cipherText) {
-        throw new Error("User does not have a stored cipher text")
+        throw new Error('User does not have a stored cipher text')
       }
 
-      res
-        .status(200)
-        .json({ cipherText: user.cipherText })
+      res.status(200).json({ cipherText: user.cipherText })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
   }
 
   /*
-    * Store the backup Share in the portalEx database.
-    */
+   * Store the backup Share in the portalEx database.
+   */
   async storeBackupShare(req: any, res: any): Promise<void> {
     try {
       const clientId = req.body['clientId']
       const backupShare = String(req.body['share'])
-      console.log(`Recieved The Client Id ${clientId}`);
-      console.log(`Recieved The BackUp Share ${backupShare}`);
+      console.log(`Recieved The Client Id ${clientId}`)
+      console.log(`Recieved The BackUp Share ${backupShare}`)
 
       if (!clientId || !backupShare) {
-        throw new Error("MPC processor did not send the API Key or Share")
+        throw new Error('MPC processor did not send the API Key or Share')
       }
       const user = await this.getUserByClientId(clientId)
 
@@ -277,33 +273,30 @@ class MobileService {
       })
       res
         .status(200)
-        .send(`Successfully stored backup share for client`)
+        .json({ message: `Successfully stored backup share for client` })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
-
   }
 
   /*
-  * Get the backup Share from the portalEx database.
-  */
+   * Get the backup Share from the portalEx database.
+   */
   async getBackupShare(req: any, res: any): Promise<void> {
     try {
       const clientId = req.body['clientId']
 
       if (!clientId) {
-        throw new Error("Did not receive clientId")
+        throw new Error('Did not receive clientId')
       }
 
       const user = await this.getUserByClientId(clientId)
 
-      res
-        .status(200)
-        .json({ backupShare: user.backupShare })
+      res.status(200).json({ backupShare: user.backupShare })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
   }
 
@@ -328,16 +321,13 @@ class MobileService {
       )
       const txHash = await this.transferExchangeFunds(address, amount, chainId)
 
-
       console.info(
         `Successfully submitted transfer for ${amount} ETH into ${address} (user: ${user.exchangeUserId})`
       )
-      res
-        .status(200)
-        .json({ txHash })
+      res.status(200).json({ txHash })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
   }
 
@@ -349,11 +339,13 @@ class MobileService {
       const exchangeUserId = Number(req.params['exchangeUserId'])
 
       if (!('chainId' in req.query)) {
-        throw new Error("Chain id is required for getting the balance")
+        throw new Error('Chain id is required for getting the balance')
       }
       const chainId = Number(req.query['chainId'])
 
-      const cache = await this.prisma.exchangeBalance.findFirst({ where: { chainId } })
+      const cache = await this.prisma.exchangeBalance.findFirst({
+        where: { chainId },
+      })
       let balance = cache?.cachedBalance
 
       if (!balance) {
@@ -361,7 +353,7 @@ class MobileService {
         await this.prisma.exchangeBalance.create({
           data: {
             cachedBalance: updatedBalance,
-            chainId
+            chainId,
           },
         })
         balance = new Decimal(updatedBalance)
@@ -374,7 +366,7 @@ class MobileService {
       res.status(200).json({ balance })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
   }
 
@@ -388,12 +380,14 @@ class MobileService {
 
       const updatedBalance = await this.exchangeService.getBalance(chainId)
 
-      const cachedBalance = await this.prisma.exchangeBalance.findFirst({ where: { chainId } })
+      const cachedBalance = await this.prisma.exchangeBalance.findFirst({
+        where: { chainId },
+      })
       if (!cachedBalance) {
         await this.prisma.exchangeBalance.create({
           data: {
             cachedBalance: updatedBalance,
-            chainId
+            chainId,
           },
         })
       } else {
@@ -403,7 +397,7 @@ class MobileService {
           },
           data: {
             cachedBalance: updatedBalance,
-            chainId
+            chainId,
           },
         })
       }
@@ -415,7 +409,7 @@ class MobileService {
       res.status(200).json({ balance: updatedBalance })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
   }
 
@@ -433,7 +427,7 @@ class MobileService {
       res.status(200).json({ address })
     } catch (error) {
       console.error(error)
-      res.status(500).send('Unknown server error')
+      res.status(500).json({ message: 'Internal server error' })
     }
   }
 
@@ -471,8 +465,8 @@ class MobileService {
   }
 
   /*
-     * Gets user object based on clientApiKey
-     */
+   * Gets user object based on clientApiKey
+   */
   private async getUserByClientId(clientId: string) {
     console.info(`Querying for userId: ${clientId}`)
     const user = await this.prisma.user.findFirst({
@@ -480,7 +474,7 @@ class MobileService {
     })
 
     if (!user) {
-      throw new EntityNotFoundError('User', "clientId")
+      throw new EntityNotFoundError('User', 'clientId')
     }
 
     return user
@@ -490,7 +484,11 @@ class MobileService {
    * Transfers an amount of funds from the omnibus to a specific "to" address.
    * Primarily used to send funds to the users connected portal wallet.
    */
-  private async transferExchangeFunds(to: string, amount: number, chainId: number) {
+  private async transferExchangeFunds(
+    to: string,
+    amount: number,
+    chainId: number
+  ) {
     if (!isAddress(to)) {
       throw new Error(`Address ${to} is not a valid ethereum address.`)
     }

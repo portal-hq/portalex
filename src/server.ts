@@ -12,7 +12,7 @@ import { EXCHANGE_WALLET_ADDRESS, EXCHANGE_WALLET_PRIVATE_KEY } from './config'
 import { authMiddleware } from './libs/auth'
 
 const app: Application = express()
-const port: number = Number(process.env.PORT) || 3000
+const port: number = Number(process.env.PORT) || 3006
 const prisma = new PrismaClient()
 
 const exchangeWallet = EthersWallet.createRandom()

@@ -75,11 +75,13 @@ app.post(
   '/webhook/backup/fetch',
   authMiddleware,
   async (req: any, res: any) => {
+    console.log('Requested by IP address:', req.ip)
     await mobileService.getBackupShare(req, res)
   }
 )
 
 app.post('/webhook/backup', authMiddleware, async (req: any, res: any) => {
+  console.log('Requested by IP address:', req.ip)
   await mobileService.storeBackupShare(req, res)
 })
 

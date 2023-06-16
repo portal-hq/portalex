@@ -1,4 +1,5 @@
 import 'express-async-errors'
+import cors from 'cors';
 import bodyParser from 'body-parser'
 import express, { Application } from 'express'
 import morgan from 'morgan'
@@ -34,6 +35,7 @@ const walletService = new WalletService(prisma)
 
 app.use(bodyParser.json())
 app.use(morgan('tiny'))
+app.use(cors());
 
 app.get('/ping', async (req: any, res: any) => {
   res.status(200).send('pong')

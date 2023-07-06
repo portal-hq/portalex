@@ -15,7 +15,7 @@ import {
   PORTAL_WEB_URL,
 } from './config'
 import { authMiddleware } from './libs/auth'
-import WebService from 'services/WebService'
+import WebService from './services/WebService'
 
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000

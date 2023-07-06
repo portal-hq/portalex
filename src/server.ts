@@ -86,9 +86,7 @@ app.get(
       parseInt(req.params.exchangeUserId)
     )
 
-    res.redirect(
-      `${PORTAL_WEB_URL}/clients/token/authenticate?token=${authToken}`
-    )
+    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?token=${authToken}`)
   }
 )
 

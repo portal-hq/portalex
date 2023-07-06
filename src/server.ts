@@ -82,11 +82,11 @@ app.post('/mobile/:exchangeUserId/cipher-text', async (req: any, res: any) => {
 app.get(
   '/portal/:exchangeUserId/authenticate',
   async (req: Request, res: Response) => {
-    const authToken = await webService.getWebAuthToken(
+    const webOtp = await webService.getWebOtp(
       parseInt(req.params.exchangeUserId)
     )
 
-    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?token=${authToken}`)
+    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
   }
 )
 

@@ -10,7 +10,7 @@ export default class WebService {
     this.portalApi = new PortalApi(CUSTODIAN_API_KEY)
   }
 
-  async getWebAuthToken(userId: number) {
+  async getWebOtp(userId: number) {
     const user = await this.prisma.user.findFirst({
       where: { exchangeUserId: userId },
     })
@@ -23,14 +23,12 @@ export default class WebService {
       throw new Error('User does not have a client ID')
     }
 
-    const authToken = await this.portalApi.getClientAuthToken(user.clientId)
+    const webOtp = await this.portalApi.getWebOTP(user.clientId)
 
-    console.log(`Got authToken:`, authToken)
-
-    if (!authToken) {
-      throw new Error('Unable to get auth token')
+    if (!webOtp) {
+      throw new Error('Unable to get Web OTP')
     }
 
-    return authToken
+    return webOtp
   }
 }

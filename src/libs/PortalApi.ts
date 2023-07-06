@@ -9,10 +9,10 @@ type PortalClientResponse = {
 class PortalApi {
   constructor(private apiKey: string) {}
 
-  async getClientAuthToken(clientId: string): Promise<string> {
+  async getWebOTP(clientId: string): Promise<string> {
     try {
       const { data } = await axios.get(
-        `${PORTAL_API_URL}/api/v1/custodians/clients/${clientId}/auth-token`,
+        `${PORTAL_API_URL}/api/v1/custodians/clients/${clientId}/web-otp`,
         {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
@@ -20,9 +20,9 @@ class PortalApi {
         }
       )
 
-      return data.clientAuthToken
+      return data.otp
     } catch (err) {
-      console.error(`Error getting clientAuthToken: `, err)
+      console.error(`Error getting Web OTP: `, err)
       throw {
         status: (err as AxiosError).response?.status,
         message: `Portal API Error: ${

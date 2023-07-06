@@ -13,8 +13,8 @@ export default class WebService {
   async getWebAuthToken(userId: number) {
     console.log(`Fetching user from database: ${userId}...`)
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.prisma.user.findFirst({
+      where: { exchangeUserId: userId },
     })
 
     if (!user) {

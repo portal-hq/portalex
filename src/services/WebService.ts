@@ -11,8 +11,6 @@ export default class WebService {
   }
 
   async getWebAuthToken(userId: number) {
-    console.log(`Fetching user from database: ${userId}...`)
-
     const user = await this.prisma.user.findFirst({
       where: { exchangeUserId: userId },
     })
@@ -26,6 +24,8 @@ export default class WebService {
     }
 
     const authToken = await this.portalApi.getClientAuthToken(user.clientId)
+
+    console.log(`Got authToken:`, authToken)
 
     if (!authToken) {
       throw new Error('Unable to get auth token')

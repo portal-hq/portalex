@@ -22,6 +22,7 @@ class PortalApi {
 
       return data.clientAuthToken
     } catch (err) {
+      console.error(`Error getting clientAuthToken: `, err)
       throw {
         status: (err as AxiosError).response?.status,
         message: `Portal API Error: ${

@@ -79,7 +79,7 @@ app.post('/mobile/:exchangeUserId/cipher-text', async (req: any, res: any) => {
   await mobileService.storeCipherText(req, res)
 })
 
-app.head(
+app.get(
   '/portal/:exchangeUserId/authenticate',
   cors({
     credentials: true,

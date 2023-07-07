@@ -81,6 +81,10 @@ app.post('/mobile/:exchangeUserId/cipher-text', async (req: any, res: any) => {
 
 app.get(
   '/portal/:exchangeUserId/authenticate',
+  cors({
+    credentials: true,
+    origin: 'https://ab8d-135-180-135-185.ngrok.app',
+  }),
   async (req: Request, res: Response) => {
     const webOtp = await webService.getWebOtp(
       parseInt(req.params.exchangeUserId)

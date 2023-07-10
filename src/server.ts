@@ -94,18 +94,13 @@ app.get(
   }
 )
 
-app.get(
-  '/portal/:exchangeUserId/authenticate',
-  async (req: Request, res: Response) => {
-    const webOtp = await webService.getWebOtp(
-      parseInt(req.params.exchangeUserId)
-    )
+app.get('/portal/:exchangeUserId/otp', async (req: Request, res: Response) => {
+  const webOtp = await webService.getWebOtp(parseInt(req.params.exchangeUserId))
 
-    res.json({
-      otp: webOtp,
-    })
-  }
-)
+  res.json({
+    otp: webOtp,
+  })
+})
 
 app.post(
   '/webhook/backup/fetch',

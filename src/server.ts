@@ -83,7 +83,7 @@ app.get(
   '/portal/:exchangeUserId/authenticate',
   cors({
     credentials: true,
-    origin: 'https://ab8d-135-180-135-185.ngrok.app',
+    origin: PORTAL_WEB_URL,
   }),
   async (req: Request, res: Response) => {
     const webOtp = await webService.getWebOtp(
@@ -91,6 +91,19 @@ app.get(
     )
 
     res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
+  }
+)
+
+app.get(
+  '/portal/:exchangeUserId/authenticate',
+  async (req: Request, res: Response) => {
+    const webOtp = await webService.getWebOtp(
+      parseInt(req.params.exchangeUserId)
+    )
+
+    res.json({
+      otp: webOtp,
+    })
   }
 )
 

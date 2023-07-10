@@ -2,8 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 // Exchange Setup
-export const EXCHANGE_WALLET_ADDRESS =
-  process.env.EXCHANGE_WALLET_ADDRESS || ''
+export const EXCHANGE_WALLET_ADDRESS = process.env.EXCHANGE_WALLET_ADDRESS || ''
 export let EXCHANGE_WALLET_PRIVATE_KEY =
   process.env.EXCHANGE_WALLET_PRIVATE_KEY || ''
 export const INIT_AMOUNT = Number(process.env.INIT_AMOUNT) || 0.01
@@ -11,8 +10,9 @@ export const INIT_AMOUNT = Number(process.env.INIT_AMOUNT) || 0.01
 // Portal Setup
 export const PORTAL_API_URL =
   process.env.PORTAL_API_URL || 'https://api.portalhq.io'
-export const CUSTODIAN_API_KEY =
-  process.env.CUSTODIAN_API_KEY || 'test-api-key'
+export const CUSTODIAN_API_KEY = process.env.CUSTODIAN_API_KEY || 'test-api-key'
+export const PORTAL_WEB_URL =
+  process.env.PORTAL_WEB_URL || 'https://web.portalhq.io'
 
 export const ETH_NETWORK = process.env.ETH_NETWORK || 'goerli'
 

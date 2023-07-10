@@ -1,7 +1,7 @@
 import 'express-async-errors'
-import cors from 'cors';
+import cors from 'cors'
 import bodyParser from 'body-parser'
-import express, { Application } from 'express'
+import express, { Application, Request, Response } from 'express'
 import morgan from 'morgan'
 import { PrismaClient } from '@prisma/client'
 import { Wallet as EthersWallet } from 'ethers'
@@ -9,8 +9,13 @@ import { _TypedDataEncoder } from 'ethers/lib/utils'
 import HotWalletService from './services/HotWalletService'
 import MobileService from './services/MobileService'
 import WalletService from './services/WalletService'
-import { EXCHANGE_WALLET_ADDRESS, EXCHANGE_WALLET_PRIVATE_KEY } from './config'
+import {
+  EXCHANGE_WALLET_ADDRESS,
+  EXCHANGE_WALLET_PRIVATE_KEY,
+  PORTAL_WEB_URL,
+} from './config'
 import { authMiddleware } from './libs/auth'
+import WebService from './services/WebService'
 
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
@@ -31,11 +36,12 @@ const exchangeService = new HotWalletService(
   exchangePrivateKey
 )
 const mobileService: MobileService = new MobileService(prisma, exchangeService)
+const webService = new WebService(prisma)
 const walletService = new WalletService(prisma)
 
 app.use(bodyParser.json())
 app.use(morgan('tiny'))
-app.use(cors());
+app.use(cors())
 
 app.get('/ping', async (req: any, res: any) => {
   res.status(200).send('pong')
@@ -71,6 +77,29 @@ app.get(
 
 app.post('/mobile/:exchangeUserId/cipher-text', async (req: any, res: any) => {
   await mobileService.storeCipherText(req, res)
+})
+
+app.get(
+  '/portal/:exchangeUserId/authenticate',
+  cors({
+    credentials: true,
+    origin: PORTAL_WEB_URL,
+  }),
+  async (req: Request, res: Response) => {
+    const webOtp = await webService.getWebOtp(
+      parseInt(req.params.exchangeUserId)
+    )
+
+    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
+  }
+)
+
+app.get('/portal/:exchangeUserId/otp', async (req: Request, res: Response) => {
+  const webOtp = await webService.getWebOtp(parseInt(req.params.exchangeUserId))
+
+  res.json({
+    otp: webOtp,
+  })
 })
 
 app.post(

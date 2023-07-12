@@ -37,14 +37,19 @@ class PortalApi {
    *
    * @returns clientApiKey
    */
-  async getClientApiKey(username: string): Promise<PortalClientResponse> {
+  async getClientApiKey(
+    username: string,
+    isAccountAbstracted: boolean
+  ): Promise<PortalClientResponse> {
     console.info(
       `Requesting Client API Key from Connect API for user: ${username}, ${PORTAL_API_URL}, ${this.apiKey}`
     )
     return await axios
       .post(
         `${PORTAL_API_URL}/api/clients`,
-        {},
+        {
+          ...(isAccountAbstracted ? { isAccountAbstracted } : {}),
+        },
         {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,

@@ -32,12 +32,14 @@ class MobileService {
    */
   async login(req: Request, res: Response): Promise<void> {
     try {
-      let { username } = req.body
+      let { username, isAccountAbstracted } = req.body
       if (!username || username === '') {
         throw new MissingParameterError('username')
       }
 
       username = String(username)
+      isAccountAbstracted = Boolean(isAccountAbstracted)
+
       console.info(`Attempting to login user: ${username}`)
 
       let user = await this.getUserByUsername(username).catch((error) => {
@@ -56,7 +58,10 @@ class MobileService {
 
       if (!user.clientApiKey) {
         // const wallet = await this.walletService.createWallet()
-        const portalClient = await this.portalApi.getClientApiKey(user.username)
+        const portalClient = await this.portalApi.getClientApiKey(
+          user.username,
+          isAccountAbstracted
+        )
         user = await this.prisma.user.update({
           data: {
             clientApiKey: portalClient.clientApiKey,
@@ -90,12 +95,13 @@ class MobileService {
    */
   async signUp(req: any, res: any): Promise<void> {
     try {
-      let { username } = req.body
+      let { username, isAccountAbstracted } = req.body
       if (!username || username === '') {
         throw new MissingParameterError('username')
       }
 
       username = String(username)
+      isAccountAbstracted = Boolean(isAccountAbstracted)
 
       const existingUser = await this.getUserByUsername(username).catch(
         (error) => {
@@ -130,7 +136,10 @@ class MobileService {
       }
 
       console.info(`Calling portal to create a client api key`)
-      const portalClient = await this.portalApi.getClientApiKey(username)
+      const portalClient = await this.portalApi.getClientApiKey(
+        username,
+        isAccountAbstracted
+      )
       const user = await this.prisma.user.create({
         data: {
           exchangeUserId,
@@ -156,7 +165,7 @@ class MobileService {
     }
   }
 
-  async createUser(username: string) {
+  async createUser(username: string, isAccountAbstracted: boolean) {
     const exchangeUserId = Math.floor(Math.random() * 1000000)
     const existingExchangeUser = await this.getUserByExchangeId(
       exchangeUserId
@@ -172,7 +181,10 @@ class MobileService {
     }
 
     console.info(`Calling wallet service to create wallet`)
-    const portalClient = await this.portalApi.getClientApiKey(username)
+    const portalClient = await this.portalApi.getClientApiKey(
+      username,
+      isAccountAbstracted
+    )
     const user = await this.prisma.user.create({
       data: {
         exchangeUserId,

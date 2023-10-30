@@ -118,21 +118,27 @@ class MobileService {
         return
       }
 
-      const exchangeUserId = Math.floor(Math.random() * 1000000)
-      const existingExchangeUser = await this.getUserByExchangeId(
-        exchangeUserId
-      ).catch((error) => {
-        if (error instanceof EntityNotFoundError) {
-          return null
-        }
-        throw error
-      })
+      // idk why we have this exchangeUserId, but it needs to be a unique random number
+      let attempt = 0
+      const maxAttempts = 5
+      let exchangeUserId = 0
+      let userAlreadyExists = true
 
-      if (existingExchangeUser) {
-        res
-          .status(400)
-          .json({ message: 'User already exists with user id, try again' })
-        return
+      while (userAlreadyExists) {
+        if (attempt > maxAttempts) {
+          throw new Error('Failed to create user. Could not generate unique id. Try again.')
+        }
+
+        exchangeUserId = Math.floor(Math.random() * 100000000)
+        console.info(`Attempting to create user with exchangeUserId: ${exchangeUserId}`)
+        await this.getUserByExchangeId(
+          exchangeUserId
+        ).catch((error) => {
+          if (error instanceof EntityNotFoundError) {
+            userAlreadyExists = false
+          }
+        })
+        attempt++
       }
 
       console.info(`Calling portal to create a client api key`)
@@ -166,7 +172,7 @@ class MobileService {
   }
 
   async createUser(username: string, isAccountAbstracted: boolean) {
-    const exchangeUserId = Math.floor(Math.random() * 1000000)
+    const exchangeUserId = Math.floor(Math.random() * 100000000)
     const existingExchangeUser = await this.getUserByExchangeId(
       exchangeUserId
     ).catch((error) => {

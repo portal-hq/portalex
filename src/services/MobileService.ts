@@ -126,14 +126,16 @@ class MobileService {
 
       while (userAlreadyExists) {
         if (attempt > maxAttempts) {
-          throw new Error('Failed to create user. Could not generate unique id. Try again.')
+          throw new Error(
+            'Failed to create user. Could not generate unique id. Try again.'
+          )
         }
 
         exchangeUserId = Math.floor(Math.random() * 100000000)
-        console.info(`Attempting to create user with exchangeUserId: ${exchangeUserId}`)
-        await this.getUserByExchangeId(
-          exchangeUserId
-        ).catch((error) => {
+        console.info(
+          `Attempting to create user with exchangeUserId: ${exchangeUserId}`
+        )
+        await this.getUserByExchangeId(exchangeUserId).catch((error) => {
           if (error instanceof EntityNotFoundError) {
             userAlreadyExists = false
           }
@@ -273,8 +275,7 @@ class MobileService {
     try {
       const clientId = req.body['clientId']
       const backupShare = String(req.body['share'])
-      console.log(`Recieved The Client Id ${clientId}`)
-      console.log(`Recieved The BackUp Share ${backupShare}`)
+      console.info(`Storing backup share for client ${clientId}`)
 
       if (!clientId || !backupShare) {
         throw new Error('MPC processor did not send the API Key or Share')
@@ -289,6 +290,8 @@ class MobileService {
           backupShare: backupShare,
         },
       })
+
+      console.info(`Successfully stored backup share for client ${clientId}`)
       res
         .status(200)
         .json({ message: `Successfully stored backup share for client` })
@@ -304,13 +307,19 @@ class MobileService {
   async getBackupShare(req: any, res: any): Promise<void> {
     try {
       const clientId = req.body['clientId']
-
       if (!clientId) {
         throw new Error('Did not receive clientId')
       }
 
       const user = await this.getUserByClientId(clientId)
+      if (!user?.backupShare) {
+        res.status(400).json({ message: 'User does not have a backup share' })
+        return
+      }
 
+      console.info(
+        `Successfully responded with backup share for client ${clientId}`
+      )
       res.status(200).json({ backupShare: user.backupShare })
     } catch (error) {
       console.error(error)

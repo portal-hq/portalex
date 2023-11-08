@@ -75,7 +75,7 @@ app.post('/magic/new', async (req, res) => {
     }
   })
 
-  const magicLink = `http://localhost:8000/magic/verify?code=${code}`;
+  const magicLink = `${MAGIC_LINK_REDIRECT_URL}/magic/verify?code=${code}`;
 
   try {
     console.log(`Sending magic link to ${email}`)
@@ -108,7 +108,7 @@ app.post('/magic/new', async (req, res) => {
 app.get('/magic/verify',   
   cors({
     credentials: true,
-    origin: 'localhost:3000'
+    origin: MAGIC_LINK_REDIRECT_URL
   }),  
   async (req, res) => {
     const { code } = req.query
@@ -139,14 +139,18 @@ app.get('/magic/verify',
       })
 
       if (!user) {
-        const user = await mobileService.createUser(email, false)
+        user = await mobileService.createUser(email, false)
         console.log(`Created new user ${email}`)
       }
 
       // set the logged in user
       res.cookie('userEmail', email, { maxAge: 900000, httpOnly: false })
 
-      res.redirect(MAGIC_LINK_REDIRECT_URL)
+      // res.redirect(`${MAGIC_LINK_REDIRECT_URL}/magic/auth`)
+      res.status(200).json({
+        exchangeUserId: user.exchangeUserId,
+        clientApiKey: user.clientApiKey,
+      })
     } else {
       res.sendStatus(401)
     }

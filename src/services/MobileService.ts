@@ -287,7 +287,7 @@ class MobileService {
           id: user.id,
         },
         data: {
-          backupShare: backupShare,
+          backupShare,
         },
       })
 
@@ -464,7 +464,7 @@ class MobileService {
   private async getUserByUsername(username: string): Promise<User> {
     console.info(`Querying for user by username: ${username}`)
 
-    const user = await this.prisma.user.findFirst({
+    const user = await this.prisma.user.findUnique({
       where: { username },
     })
 
@@ -480,7 +480,7 @@ class MobileService {
    */
   private async getUserByExchangeId(exchangeUserId: number) {
     console.info(`Querying for userId: ${exchangeUserId}`)
-    const user = await this.prisma.user.findFirst({
+    const user = await this.prisma.user.findUnique({
       where: { exchangeUserId },
     })
 
@@ -496,7 +496,7 @@ class MobileService {
    */
   private async getUserByClientId(clientId: string) {
     console.info(`Querying for userId: ${clientId}`)
-    const user = await this.prisma.user.findFirst({
+    const user = await this.prisma.user.findUnique({
       where: { clientId },
     })
 

@@ -12,8 +12,8 @@ model User {
   walletId       String?
   exchangeUserId Int     @unique
   cipherText     String?
-  clientApiKey   String?
-  clientId       String? @unique
+  clientApiKey   String  @unique
+  clientId       String  @unique
   backupShare    String?
   username       String  @unique
   apiSecret      String?

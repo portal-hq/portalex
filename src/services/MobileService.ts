@@ -277,9 +277,15 @@ class MobileService {
       const backupShare = String(req.body['share'])
       console.info(`Storing backup share for client ${clientId}`)
 
-      if (!clientId || !backupShare) {
-        throw new Error('MPC processor did not send the API Key or Share')
+      if (!clientId) {
+        console.error('[storeBackupShare] Did not receive clientId')
+        throw new Error('[storeBackupShare] Did not receive clientId')
       }
+      if (!backupShare) {
+        console.error('[storeBackupShare] Did not receive backup share')
+        throw new Error('[storeBackupShare] Did not receive backup share')
+      }
+
       const user = await this.getUserByClientId(clientId)
 
       await this.prisma.user.update({
@@ -308,11 +314,15 @@ class MobileService {
     try {
       const clientId = req.body['clientId']
       if (!clientId) {
-        throw new Error('Did not receive clientId')
+        console.error('[getBackupShare] Did not receive clientId')
+        throw new Error('[getBackupShare] Did not receive clientId')
       }
 
       const user = await this.getUserByClientId(clientId)
       if (!user?.backupShare) {
+        console.info(
+          `User ${clientId} does not have a backup share stored in the database`
+        )
         res.status(400).json({ message: 'User does not have a backup share' })
         return
       }

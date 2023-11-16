@@ -201,14 +201,14 @@ app.get(
   '/portal/:exchangeUserId/authenticate',
   cors({
     credentials: true,
-    origin: PORTAL_WEB_URL,
+    origin: ['https://portal.schmitso.com'],
   }),
   async (req: Request, res: Response) => {
     const webOtp = await webService.getWebOtp(
       parseInt(req.params.exchangeUserId)
     )
 
-    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
+    res.redirect(`https://portal.schmitso.com/clients/token/validate?otp=${webOtp}`)
   }
 )
 

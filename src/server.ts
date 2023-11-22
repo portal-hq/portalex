@@ -8,14 +8,20 @@ import { Wallet as EthersWallet } from 'ethers'
 import { _TypedDataEncoder } from 'ethers/lib/utils'
 import HotWalletService from './services/HotWalletService'
 import MobileService from './services/MobileService'
-import WalletService from './services/WalletService'
 import {
   EXCHANGE_WALLET_ADDRESS,
   EXCHANGE_WALLET_PRIVATE_KEY,
   PORTAL_WEB_URL,
+  SENDGRID_API_KEY,
+  MAGIC_LINK_REDIRECT_URL,
+  MAGIC_LINK_FROM_EMAIL,
+  MAGIC_LINK_FROM_NAME
 } from './config'
 import { authMiddleware } from './libs/auth'
 import WebService from './services/WebService'
+import { randomUUID } from 'crypto'
+import SendGridService from './libs/sendgrid'
+import { isAxiosError } from 'axios'
 
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
@@ -37,7 +43,6 @@ const exchangeService = new HotWalletService(
 )
 const mobileService: MobileService = new MobileService(prisma, exchangeService)
 const webService = new WebService(prisma)
-const walletService = new WalletService(prisma)
 
 app.use(bodyParser.json())
 app.use(morgan('tiny'))
@@ -46,13 +51,114 @@ app.use(cors())
 app.get('/ping', async (req: any, res: any) => {
   res.status(200).send('pong')
 })
+
+/*
+ * Auth endpoints
+ */
 app.post('/mobile/signup', async (req: any, res: any) => {
   await mobileService.signUp(req, res)
 })
+
 app.post('/mobile/login', async (req: any, res: any) => {
   await mobileService.login(req, res)
 })
 
+
+app.post('/magic/new', async (req, res) => {
+  const { email } = req.body
+  const code = randomUUID()
+
+  await prisma.magicCode.create({
+    data: {
+      code,
+      email,
+    }
+  })
+
+  const magicLink = `${MAGIC_LINK_REDIRECT_URL}/magic/verify?code=${code}`;
+
+  try {
+    console.log(`Sending magic link to ${email}`)
+
+    const sendgrid = new SendGridService(SENDGRID_API_KEY)
+    await sendgrid.sendEmail({
+      to: email,
+      toName: email,
+      from:  MAGIC_LINK_FROM_EMAIL,
+      fromName: MAGIC_LINK_FROM_NAME,
+      subject: 'Portal Demo Magic Link',
+      body: `Click here to login: ${magicLink}`
+    })
+    
+    res.sendStatus(200)
+  } catch (err) {
+    if (isAxiosError(err)) {
+      console.error(`Received ${err.response?.status} from SendGrid: ${JSON.stringify(err.response?.data)}`)
+    } else {
+      console.error(err)
+    }
+
+    res.sendStatus(500)
+  }
+})
+
+/**
+ *  MagicLink verification
+ */
+app.get('/magic/verify',   
+  cors({
+    credentials: true,
+    origin: MAGIC_LINK_REDIRECT_URL
+  }),  
+  async (req, res) => {
+    const { code } = req.query
+
+    const magicCode = await prisma.magicCode.findFirst({
+      where: {
+        code: code as string
+      }
+    })
+
+    if (magicCode) {
+      console.log(`Successfully verified magic link for ${magicCode.email}`)
+
+      // remove the code now that it's been used
+      await prisma.magicCode.delete({
+        where: {
+          id: magicCode.id
+        }
+      })
+
+      // create a new user if they don't exist
+      const { email } = magicCode
+
+      let user = await prisma.user.findFirst({
+        where: {
+          username: email
+        }
+      })
+
+      if (!user) {
+        user = await mobileService.createUser(email, false)
+        console.log(`Created new user ${email}`)
+      }
+
+      // set the logged in user
+      res.cookie('userEmail', email, { maxAge: 900000, httpOnly: false })
+
+      // res.redirect(`${MAGIC_LINK_REDIRECT_URL}/magic/auth`)
+      res.status(200).json({
+        exchangeUserId: user.exchangeUserId,
+        clientApiKey: user.clientApiKey,
+      })
+    } else {
+      res.sendStatus(401)
+    }
+})
+
+/*
+ * Wallet endpoints
+ */
 app.get('/mobile/:exchangeUserId/balance', async (req: any, res: any) => {
   await mobileService.getExchangeBalance(req, res)
 })

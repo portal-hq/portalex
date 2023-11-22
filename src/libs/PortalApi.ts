@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios'
+import axios, { AxiosError, isAxiosError } from 'axios'
 import { PORTAL_API_URL } from '../config'
 
 type PortalClientResponse = {
@@ -22,12 +22,20 @@ class PortalApi {
 
       return data.otp
     } catch (err) {
-      console.error(`Error getting Web OTP: `, err)
-      throw {
-        status: (err as AxiosError).response?.status,
-        message: `Portal API Error: ${
-          (err as AxiosError).response?.data['error']
-        }`,
+      if (isAxiosError(err)) {
+        err as AxiosError
+        console.error(`Error getting Web OTP: `, err)
+        throw {
+          status: err.response?.status,
+          message: `Portal API Error: ${
+            err.response?.data['error']
+          }`,
+        }
+      } else {
+        throw {
+          status: 500,
+          message: `Portal API Error: ${err}`,
+        }
       }
     }
   }
@@ -60,9 +68,12 @@ class PortalApi {
         return res.data
       })
       .catch((err: AxiosError) => {
+        const errorData = err.response?.data as {
+          error?: string
+        }
         throw {
           status: err.response?.status,
-          message: `Portal API Error: ${err.response?.data['error']}`,
+          message: `Portal API Error: ${errorData?.error}`,
         }
       })
   }
@@ -85,9 +96,12 @@ class PortalApi {
         }
       )
       .catch((err: AxiosError) => {
+        const errorData = err.response?.data as {
+          error?: string
+        }
         throw {
           status: err.response?.status,
-          message: `Portal API Error: ${err.response?.data['error']}`,
+          message: `Portal API Error: ${errorData.error}`,
         }
       })
   }

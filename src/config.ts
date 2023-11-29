@@ -14,7 +14,7 @@ export const CUSTODIAN_API_KEY = process.env.CUSTODIAN_API_KEY || 'test-api-key'
 export const PORTAL_WEB_URL =
   process.env.PORTAL_WEB_URL || 'https://web.portalhq.io'
 
-export const ETH_NETWORK = process.env.ETH_NETWORK || 'goerli'
+export const ETH_NETWORK = process.env.ETH_NETWORK || 'sepolia'
 
 // Used for demo script to register a webhook
 export const WEBHOOK_URL = process.env.WEBHOOK_URL || '' // need to set the host with /webhook at the end
@@ -22,6 +22,9 @@ export const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'secret'
 
 // Sendgrid Setup (for magic links)
 export const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || ''
-export const MAGIC_LINK_REDIRECT_URL = process.env.MAGIC_LINK_REDIRECT_URL || 'http://localhost:3000'
-export const MAGIC_LINK_FROM_EMAIL = process.env.MAGIC_LINK_FROM_EMAIL || 'david@portalhq.io'
-export const MAGIC_LINK_FROM_NAME = process.env.MAGIC_LINK_FROM_NAME || 'Portal Demo (David)'
+export const MAGIC_LINK_REDIRECT_URL =
+  process.env.MAGIC_LINK_REDIRECT_URL || 'http://localhost:3000'
+export const MAGIC_LINK_FROM_EMAIL =
+  process.env.MAGIC_LINK_FROM_EMAIL || 'david@portalhq.io'
+export const MAGIC_LINK_FROM_NAME =
+  process.env.MAGIC_LINK_FROM_NAME || 'Portal Demo (David)'

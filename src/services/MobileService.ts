@@ -354,12 +354,12 @@ class MobileService {
       // }
 
       console.log(
-        `Transferring ${amount} ETH into ${address} (user: ${user.exchangeUserId})`
+        `Transferring ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`
       )
       const txHash = await this.transferExchangeFunds(address, amount, chainId)
 
       console.info(
-        `Successfully submitted transfer for ${amount} ETH into ${address} (user: ${user.exchangeUserId})`
+        `Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`
       )
       res.status(200).json({ txHash })
     } catch (error) {
@@ -533,7 +533,7 @@ class MobileService {
     const balance = this.exchangeService.getBalance(chainId)
     if (amount >= 0 && Number(balance) < amount) {
       throw new Error(
-        `You're balance of ${balance} is too low to transfer ${amount} ETH to your portal wallet`
+        `You're balance of ${balance} is too low to transfer ${amount} ETH (Chain ID: ${chainId}) to your portal wallet`
       )
     }
 

@@ -4,8 +4,11 @@ import { PrismaClient } from '@prisma/client'
 import { chainToName } from '../libs/utils'
 
 class HotWalletService {
-  constructor(private prisma: PrismaClient, public address: string, private privateKey: string) {
-  }
+  constructor(
+    private prisma: PrismaClient,
+    public address: string,
+    private privateKey: string
+  ) {}
   /*
    * returns (String) Users account balance of Ether in USD.
    */
@@ -48,10 +51,14 @@ class HotWalletService {
 
       const toBalance = await provider.getBalance(to)
       if (toBalance.lt(utils.parseEther(amount.toString()))) {
-        throw new Error(`Address ${to} does not have a high enough balance (${toBalance} to transfer ${amount} eth out`)
+        throw new Error(
+          `Address ${to} does not have a high enough balance (${toBalance} to transfer ${amount} eth out`
+        )
       }
 
-      throw new Error(`Transfers from the web3 wallet back to the exchange wallet are not supported yet.`)
+      throw new Error(
+        `Transfers from the web3 wallet back to the exchange wallet are not supported yet.`
+      )
     }
 
     const wallet = new Wallet(privateKey, provider)

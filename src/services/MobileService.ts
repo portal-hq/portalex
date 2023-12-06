@@ -8,7 +8,6 @@ import {
   MissingParameterError,
 } from '../libs/errors'
 import PortalApi from '../libs/PortalApi'
-import { Decimal } from '@prisma/client/runtime'
 
 interface ExchangeService {
   getBalance: Function
@@ -383,7 +382,7 @@ class MobileService {
       const cache = await this.prisma.exchangeBalance.findFirst({
         where: { chainId },
       })
-      let balance = cache?.cachedBalance
+      let balance = cache?.cachedBalance?.toNumber()
 
       if (!balance) {
         const updatedBalance = await this.exchangeService.getBalance(chainId)
@@ -393,7 +392,7 @@ class MobileService {
             chainId,
           },
         })
-        balance = new Decimal(updatedBalance)
+        balance = parseFloat(updatedBalance)
       }
 
       console.info(

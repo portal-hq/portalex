@@ -1,27 +1,29 @@
-export const chainToName = (chainId: number): string => {  
+export const chainToName = (chainId: number): string => {
   if (chainId === 1) {
-    return 'mainnet';
+    return 'mainnet'
   } else if (chainId === 3) {
-    return 'ropsten';
+    return 'ropsten'
   } else if (chainId === 4) {
-    return 'rinkeby';
+    return 'rinkeby'
   } else if (chainId === 5) {
-    return 'goerli';
+    return 'goerli'
   } else if (chainId === 10) {
-    return 'optimism';
+    return 'optimism'
   } else if (chainId === 42) {
-    return 'kovan';
+    return 'kovan'
   } else if (chainId === 137) {
-    return 'matic';
+    return 'matic'
   } else if (chainId === 80001) {
-    return 'maticmum';
+    return 'mumbai'
   } else if (chainId === 42161) {
-    return 'arbitrum';
+    return 'arbitrum'
   } else if (chainId === 421611) {
-    return 'arbitrum-rinkeby';
+    return 'arbitrum-rinkeby'
+  } else if (chainId === 11155111) {
+    return 'sepolia'
   } else if (chainId === 69) {
-    return 'optimism-kovan';
+    return 'optimism-kovan'
   } else {
-    throw new Error(`Unsupported ChainId: ${chainId}`);
+    throw new Error(`Unsupported ChainId: ${chainId}`)
   }
-}; 
+}

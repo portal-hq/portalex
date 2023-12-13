@@ -29,7 +29,7 @@
     "expo-server-sdk": "^3.6.0",
     "express": "^4.17.1",
     "express-async-errors": "^3.1.1",
-    "http-status-codes": "^2.2.0",
+    "http-status-codes": "^2.3.0",
     "morgan": "^1.10.0",
     "string-strip-html": "^9.1.6"
   },

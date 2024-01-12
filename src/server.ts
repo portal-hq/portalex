@@ -175,6 +175,13 @@ app.post('/mobile/:exchangeUserId/transfer', async (req: any, res: any) => {
 })
 
 app.get(
+  '/mobile/:exchangeUserId/org-share/fetch',
+  async (req: any, res: any) => {
+    await mobileService.getOrgShare(req, res)
+  }
+)
+
+app.get(
   '/mobile/:exchangeUserId/cipher-text/fetch',
   async (req: any, res: any) => {
     await mobileService.getCipherText(req, res)

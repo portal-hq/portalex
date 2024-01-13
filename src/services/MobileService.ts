@@ -249,6 +249,25 @@ class MobileService {
   }
 
   /*
+   * Get the org share from the portalEx database for the specific user.
+   */
+  async getOrgShare(req: any, res: any): Promise<void> {
+    try {
+      const exchangeUserId = Number(req.params['exchangeUserId'])
+      const user = await this.getUserByExchangeId(exchangeUserId)
+
+      if (!user.backupShare) {
+        throw new Error('User does not have a stored org share')
+      }
+
+      res.status(200).json({ orgShare: user.backupShare })
+    } catch (error) {
+      console.error(error)
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  /*
    * Get the cipher text from the portalEx database.
    */
   async getCipherText(req: any, res: any): Promise<void> {

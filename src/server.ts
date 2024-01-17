@@ -15,7 +15,7 @@ import {
   SENDGRID_API_KEY,
   MAGIC_LINK_REDIRECT_URL,
   MAGIC_LINK_FROM_EMAIL,
-  MAGIC_LINK_FROM_NAME
+  MAGIC_LINK_FROM_NAME,
 } from './config'
 import { authMiddleware } from './libs/auth'
 import WebService from './services/WebService'
@@ -63,7 +63,6 @@ app.post('/mobile/login', async (req: any, res: any) => {
   await mobileService.login(req, res)
 })
 
-
 app.post('/magic/new', async (req, res) => {
   const { email } = req.body
   const code = randomUUID()
@@ -72,10 +71,10 @@ app.post('/magic/new', async (req, res) => {
     data: {
       code,
       email,
-    }
+    },
   })
 
-  const magicLink = `${MAGIC_LINK_REDIRECT_URL}/magic/verify?code=${code}`;
+  const magicLink = `${MAGIC_LINK_REDIRECT_URL}/magic/verify?code=${code}`
 
   try {
     console.log(`Sending magic link to ${email}`)
@@ -84,16 +83,20 @@ app.post('/magic/new', async (req, res) => {
     await sendgrid.sendEmail({
       to: email,
       toName: email,
-      from:  MAGIC_LINK_FROM_EMAIL,
+      from: MAGIC_LINK_FROM_EMAIL,
       fromName: MAGIC_LINK_FROM_NAME,
       subject: 'Portal Demo Magic Link',
-      body: `Click here to login: ${magicLink}`
+      body: `Click here to login: ${magicLink}`,
     })
-    
+
     res.sendStatus(200)
   } catch (err) {
     if (isAxiosError(err)) {
-      console.error(`Received ${err.response?.status} from SendGrid: ${JSON.stringify(err.response?.data)}`)
+      console.error(
+        `Received ${err.response?.status} from SendGrid: ${JSON.stringify(
+          err.response?.data
+        )}`
+      )
     } else {
       console.error(err)
     }
@@ -105,18 +108,19 @@ app.post('/magic/new', async (req, res) => {
 /**
  *  MagicLink verification
  */
-app.get('/magic/verify',   
+app.get(
+  '/magic/verify',
   cors({
     credentials: true,
-    origin: MAGIC_LINK_REDIRECT_URL
-  }),  
+    origin: MAGIC_LINK_REDIRECT_URL,
+  }),
   async (req, res) => {
     const { code } = req.query
 
     const magicCode = await prisma.magicCode.findFirst({
       where: {
-        code: code as string
-      }
+        code: code as string,
+      },
     })
 
     if (magicCode) {
@@ -125,8 +129,8 @@ app.get('/magic/verify',
       // remove the code now that it's been used
       await prisma.magicCode.delete({
         where: {
-          id: magicCode.id
-        }
+          id: magicCode.id,
+        },
       })
 
       // create a new user if they don't exist
@@ -134,8 +138,8 @@ app.get('/magic/verify',
 
       let user = await prisma.user.findFirst({
         where: {
-          username: email
-        }
+          username: email,
+        },
       })
 
       if (!user) {
@@ -154,7 +158,8 @@ app.get('/magic/verify',
     } else {
       res.sendStatus(401)
     }
-})
+  }
+)
 
 /*
  * Wallet endpoints
@@ -177,19 +182,19 @@ app.post('/mobile/:exchangeUserId/transfer', async (req: any, res: any) => {
 app.get(
   '/mobile/:exchangeUserId/org-share/fetch',
   async (req: any, res: any) => {
-    await mobileService.getOrgShare(req, res)
+    await mobileService.getCustodianBackupShare(req, res)
   }
 )
 
 app.get(
   '/mobile/:exchangeUserId/cipher-text/fetch',
   async (req: any, res: any) => {
-    await mobileService.getCipherText(req, res)
+    await mobileService.getClientBackupShare(req, res)
   }
 )
 
 app.post('/mobile/:exchangeUserId/cipher-text', async (req: any, res: any) => {
-  await mobileService.storeCipherText(req, res)
+  await mobileService.storeClientBackupShare(req, res)
 })
 
 app.get(
@@ -220,13 +225,13 @@ app.post(
   authMiddleware,
   async (req: any, res: any) => {
     console.log('Requested by IP address:', req.ip, req.headers)
-    await mobileService.getBackupShare(req, res)
+    await mobileService.getCustodianBackupShares(req, res)
   }
 )
 
 app.post('/webhook/backup', authMiddleware, async (req: any, res: any) => {
   console.log('Requested by IP address:', req.ip, req.headers)
-  await mobileService.storeBackupShare(req, res)
+  await mobileService.storeCustodianBackupShare(req, res)
 })
 
 app.listen(port, () =>

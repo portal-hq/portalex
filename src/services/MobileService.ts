@@ -310,13 +310,13 @@ class MobileService {
         )
       }
 
-      const backupMethod = req.body['backupMethod']
-      if (!backupMethod) {
+      const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
+      if (typeof backupMethod !== 'string') {
         console.error(
-          '[storeCustodianBackupShare] Received invalid backup method'
+          '[storeCustodianBackupShare] Did not receive backup method as a string'
         )
         throw new Error(
-          '[storeCustodianBackupShare] Received invalid backup method'
+          '[storeCustodianBackupShare] Did not receive backup method as a string'
         )
       }
 

@@ -7,33 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum BackupMethod {
-  CUSTOM
-  GDRIVE
-  ICLOUD
-  PASSWORD
-  PASSKEY
-  UNKNOWN
-}
-
 model ClientBackupShare {
-  backupMethod BackupMethod
+  backupMethod String       @default("UNKNOWN")
   createdAt    DateTime     @default(now())
   id           String       @id @default(cuid())
   cipherText   String
-  userId       Int          @unique
+  userId       Int
 
   user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, backupMethod])
 }
 
 model CustodianBackupShare {
-  backupMethod BackupMethod
+  backupMethod String       @default("UNKNOWN")
   createdAt    DateTime     @default(now())
   id           String       @id @default(cuid())
   share        String
-  userId       Int          @unique
+  userId       Int
 
   user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, backupMethod])
 }
 
 model ExchangeBalance {

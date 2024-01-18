@@ -1,6 +1,6 @@
 import { CUSTODIAN_API_KEY } from '../config'
 import { isAddress } from 'ethers/lib/utils'
-import { BackupMethod, PrismaClient, User } from '@prisma/client'
+import { PrismaClient, User } from '@prisma/client'
 import { Request, Response } from 'express'
 import {
   EntityNotFoundError,
@@ -225,7 +225,7 @@ class MobileService {
    */
   async storeClientBackupShare(req: any, res: any): Promise<void> {
     try {
-      const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
+      const backupMethod = req.body['backupMethod']
       const cipherText = String(req.body['cipherText'])
       const exchangeUserId = Number(req.params['exchangeUserId'])
 
@@ -270,13 +270,13 @@ class MobileService {
   async getClientBackupShare(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
-      const backupMethod = req.query.backupMethod || 'UNKNOWN'
+      const backupMethod = req.query.backupMethod
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
       // Attempt to find the client backup share for the specified backup method.
       const cipherText = user.clientBackupShares?.find(
-        (backupShare) => backupShare.backupMethod === backupMethod
+        (clientBackupShare) => clientBackupShare.backupMethod === backupMethod
       )
 
       res.status(200).json({ cipherText })
@@ -310,8 +310,8 @@ class MobileService {
         )
       }
 
-      const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
-      if (!backupMethod || !(backupMethod in BackupMethod)) {
+      const backupMethod = req.body['backupMethod']
+      if (!backupMethod) {
         console.error(
           '[storeCustodianBackupShare] Received invalid backup method'
         )
@@ -353,7 +353,7 @@ class MobileService {
   async getCustodianBackupShare(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
-      const backupMethod = req.query.backupMethod || 'UNKNOWN'
+      const backupMethod = req.query.backupMethod
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 

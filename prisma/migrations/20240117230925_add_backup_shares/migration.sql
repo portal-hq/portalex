@@ -44,11 +44,11 @@ ALTER TABLE "CustodianBackupShare" ADD CONSTRAINT "CustodianBackupShare_userId_f
 
 -- Add all User.backupShare to CustodianBackupShare.
 INSERT INTO "CustodianBackupShare" ("backupMethod", "createdAt", "id", "share", "userId")
-SELECT 'UNKNOWN', NOW(), "id", "backupShare", "id" FROM "User";
+SELECT 'UNKNOWN', NOW(), "id", "backupShare", "id" FROM "User" WHERE "backupShare" IS NOT NULL;
 
 -- Add all User.cipherText to ClientBackupShare.
 INSERT INTO "ClientBackupShare" ("backupMethod", "createdAt", "id", "cipherText", "userId")
-SELECT 'UNKNOWN', NOW(), "id", "cipherText", "id" FROM "User";
+SELECT 'UNKNOWN', NOW(), "id", "cipherText", "id" FROM "User" WHERE "cipherText" IS NOT NULL;
 
 -- AlterTable
 ALTER TABLE "User" DROP COLUMN "backupShare",

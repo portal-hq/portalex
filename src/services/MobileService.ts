@@ -275,11 +275,11 @@ class MobileService {
       const user = await this.getUserByExchangeId(exchangeUserId)
 
       // Attempt to find the client backup share for the specified backup method.
-      const cipherText = user.clientBackupShares?.find(
+      const clientBackupShare = user.clientBackupShares?.find(
         (clientBackupShare) => clientBackupShare.backupMethod === backupMethod
       )
 
-      res.status(200).json({ cipherText })
+      res.status(200).json({ cipherText: clientBackupShare?.cipherText })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })

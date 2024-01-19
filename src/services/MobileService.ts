@@ -270,7 +270,7 @@ class MobileService {
   async getClientBackupShare(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
-      const backupMethod = req.query.backupMethod
+      const backupMethod = req.query.backupMethod || 'UNKNOWN'
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
@@ -278,6 +278,14 @@ class MobileService {
       const clientBackupShare = user.clientBackupShares?.find(
         (clientBackupShare) => clientBackupShare.backupMethod === backupMethod
       )
+
+      // If no client backup share was found, return a 404.
+      if (!clientBackupShare) {
+        console.error(
+          `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
+        )
+        res.status(404).json({ message: 'Client backup share not found' })
+      }
 
       res.status(200).json({ cipherText: clientBackupShare?.cipherText })
     } catch (error) {
@@ -353,7 +361,7 @@ class MobileService {
   async getCustodianBackupShare(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
-      const backupMethod = req.query.backupMethod
+      const backupMethod = req.query.backupMethod || 'UNKNOWN'
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
@@ -361,6 +369,14 @@ class MobileService {
       const custodianBackupShare = user.custodianBackupShares?.find(
         (backupShare) => backupShare.backupMethod === backupMethod
       )
+
+      // If no custodian backup share was found, return a 404.
+      if (!custodianBackupShare) {
+        console.error(
+          `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
+        )
+        res.status(404).json({ message: 'Custodian backup share not found' })
+      }
 
       res.status(200).json({ orgShare: custodianBackupShare?.share })
     } catch (error) {

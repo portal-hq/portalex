@@ -358,11 +358,11 @@ class MobileService {
       const user = await this.getUserByExchangeId(exchangeUserId)
 
       // Attempt to find the custodian backup share for the specified backup method.
-      const orgShare = user.custodianBackupShares?.find(
+      const custodianBackupShare = user.custodianBackupShares?.find(
         (backupShare) => backupShare.backupMethod === backupMethod
       )
 
-      res.status(200).json({ orgShare })
+      res.status(200).json({ orgShare: custodianBackupShare?.share })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })

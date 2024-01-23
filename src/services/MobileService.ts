@@ -298,7 +298,6 @@ class MobileService {
    * Store the custodian backup share for a user.
    */
   async storeCustodianBackupShare(req: any, res: any): Promise<void> {
-    console.log('req.body', req.body)
     try {
       // Obtain the clientId from the request body.
       const clientId = req.body['clientId']

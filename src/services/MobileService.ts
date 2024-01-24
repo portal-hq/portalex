@@ -225,7 +225,7 @@ class MobileService {
    */
   async storeClientBackupShare(req: any, res: any): Promise<void> {
     try {
-      const backupMethod = req.body['backupMethod']
+      const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
       const cipherText = String(req.body['cipherText'])
       const exchangeUserId = Number(req.params['exchangeUserId'])
 

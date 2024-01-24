@@ -405,7 +405,7 @@ class MobileService {
 
       const legacyBackupShare = user.custodianBackupShares.find(
         (backupShare) => backupShare.backupMethod === 'UNKNOWN'
-      )
+      )?.share
 
       // Return the custodian backup shares for the user.
       console.info(

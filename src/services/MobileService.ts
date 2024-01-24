@@ -403,11 +403,15 @@ class MobileService {
         (backupShare) => backupShare.share
       )
 
+      const legacyBackupShare = user.custodianBackupShares.find(
+        (backupShare) => backupShare.backupMethod === 'UNKNOWN'
+      )
+
       // Return the custodian backup shares for the user.
       console.info(
         `Successfully responded with custodian backup shares for client ${clientId}`
       )
-      res.status(200).json({ backupShares })
+      res.status(200).json({ backupShare: legacyBackupShare })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })

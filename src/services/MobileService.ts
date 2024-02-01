@@ -221,27 +221,43 @@ class MobileService {
   }
 
   /*
-   * Store the cipher text in the portalEx database.
+   * Store the client backup share for a user.
    */
-  async storeCipherText(req: any, res: any): Promise<void> {
+  async storeClientBackupShare(req: any, res: any): Promise<void> {
     try {
-      const exchangeUserId = Number(req.params['exchangeUserId'])
-      const user = await this.getUserByExchangeId(exchangeUserId)
+      const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
       const cipherText = String(req.body['cipherText'])
+      const exchangeUserId = Number(req.params['exchangeUserId'])
+
+      const user = await this.getUserByExchangeId(exchangeUserId)
 
       if (!cipherText) {
         throw new Error('Client did not send the cipher text')
       }
 
-      await this.prisma.user.update({
+      // Remove any existing client backup shares for this backup method.
+      await this.prisma.clientBackupShare.deleteMany({
         where: {
-          id: user.id,
-        },
-        data: {
-          cipherText,
+          backupMethod,
+          userId: user.id,
         },
       })
-      res.status(200).json({ message: 'Successfully stored cipher text' })
+
+      // Store the client backup share.
+      await this.prisma.clientBackupShare.create({
+        data: {
+          backupMethod,
+          cipherText,
+          userId: user.id,
+        },
+      })
+
+      console.info(
+        `Successfully stored client backup share for user ${exchangeUserId}`
+      )
+      res
+        .status(200)
+        .json({ message: 'Successfully stored client backup share' })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })
@@ -249,18 +265,29 @@ class MobileService {
   }
 
   /*
-   * Get the org share from the portalEx database for the specific user.
+   * Get the client backup share for a user.
    */
-  async getOrgShare(req: any, res: any): Promise<void> {
+  async getClientBackupShare(req: any, res: any): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
+      const backupMethod = req.query.backupMethod || 'UNKNOWN'
+
       const user = await this.getUserByExchangeId(exchangeUserId)
 
-      if (!user.backupShare) {
-        throw new Error('User does not have a stored org share')
+      // Attempt to find the client backup share for the specified backup method.
+      const clientBackupShare = user.clientBackupShares?.find(
+        (clientBackupShare) => clientBackupShare.backupMethod === backupMethod
+      )
+
+      // If no client backup share was found, return a 404.
+      if (!clientBackupShare) {
+        console.error(
+          `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
+        )
+        res.status(404).json({ message: 'Client backup share not found' })
       }
 
-      res.status(200).json({ orgShare: user.backupShare })
+      res.status(200).json({ cipherText: clientBackupShare?.cipherText })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })
@@ -268,57 +295,60 @@ class MobileService {
   }
 
   /*
-   * Get the cipher text from the portalEx database.
+   * Store the custodian backup share for a user.
    */
-  async getCipherText(req: any, res: any): Promise<void> {
+  async storeCustodianBackupShare(req: any, res: any): Promise<void> {
     try {
-      const exchangeUserId = Number(req.params['exchangeUserId'])
-      const user = await this.getUserByExchangeId(exchangeUserId)
-
-      if (!user.cipherText) {
-        throw new Error('User does not have a stored cipher text')
-      }
-
-      res.status(200).json({ cipherText: user.cipherText })
-    } catch (error) {
-      console.error(error)
-      res.status(500).json({ message: 'Internal server error' })
-    }
-  }
-
-  /*
-   * Store the backup Share in the portalEx database.
-   */
-  async storeBackupShare(req: any, res: any): Promise<void> {
-    try {
+      // Obtain the clientId from the request body.
       const clientId = req.body['clientId']
-      const backupShare = String(req.body['share'])
+      if (!clientId) {
+        console.error('[storeCustodianBackupShare] Did not receive clientId')
+        throw new Error('[storeCustodianBackupShare] Did not receive clientId')
+      }
       console.info(`Storing backup share for client ${clientId}`)
 
-      if (!clientId) {
-        console.error('[storeBackupShare] Did not receive clientId')
-        throw new Error('[storeBackupShare] Did not receive clientId')
+      // Obtain the custodian backup share from the request body.
+      const share = String(req.body['share'])
+      if (!share) {
+        console.error(
+          '[storeCustodianBackupShare] Did not receive backup share'
+        )
+        throw new Error(
+          '[storeCustodianBackupShare] Did not receive backup share'
+        )
       }
-      if (!backupShare) {
-        console.error('[storeBackupShare] Did not receive backup share')
-        throw new Error('[storeBackupShare] Did not receive backup share')
+
+      const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
+      if (typeof backupMethod !== 'string') {
+        console.error(
+          '[storeCustodianBackupShare] Did not receive backup method as a string'
+        )
+        throw new Error(
+          '[storeCustodianBackupShare] Did not receive backup method as a string'
+        )
       }
 
       const user = await this.getUserByClientId(clientId)
 
-      await this.prisma.user.update({
+      // Remove any existing custodian backup shares for this backup method.
+      await this.prisma.custodianBackupShare.deleteMany({
         where: {
-          id: user.id,
+          backupMethod,
+          userId: user.id,
         },
+      })
+
+      // Store the custodian backup share.
+      await this.prisma.custodianBackupShare.create({
         data: {
-          backupShare,
+          backupMethod,
+          share,
+          userId: user.id,
         },
       })
 
       console.info(`Successfully stored backup share for client ${clientId}`)
-      res
-        .status(200)
-        .json({ message: `Successfully stored backup share for client` })
+      res.status(200).json({ message: 'Successfully stored backup share' })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })
@@ -326,29 +356,62 @@ class MobileService {
   }
 
   /*
-   * Get the backup Share from the portalEx database.
+   * Get the custodian backup share for a user.
    */
-  async getBackupShare(req: any, res: any): Promise<void> {
+  async getCustodianBackupShare(req: any, res: any): Promise<void> {
+    try {
+      const exchangeUserId = Number(req.params['exchangeUserId'])
+      const backupMethod = req.query.backupMethod || 'UNKNOWN'
+
+      const user = await this.getUserByExchangeId(exchangeUserId)
+
+      // Attempt to find the custodian backup share for the specified backup method.
+      const custodianBackupShare = user.custodianBackupShares?.find(
+        (backupShare) => backupShare.backupMethod === backupMethod
+      )
+
+      // If no custodian backup share was found, return a 404.
+      if (!custodianBackupShare) {
+        console.error(
+          `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
+        )
+        res.status(404).json({ message: 'Custodian backup share not found' })
+      }
+
+      res.status(200).json({ orgShare: custodianBackupShare?.share })
+    } catch (error) {
+      console.error(error)
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  /*
+   * Get the custodian backup shares for a user.
+   */
+  async getCustodianBackupShares(req: any, res: any): Promise<void> {
     try {
       const clientId = req.body['clientId']
       if (!clientId) {
-        console.error('[getBackupShare] Did not receive clientId')
-        throw new Error('[getBackupShare] Did not receive clientId')
+        console.error('[getCustodianBackupShares] Did not receive clientId')
+        throw new Error('[getCustodianBackupShares] Did not receive clientId')
       }
 
       const user = await this.getUserByClientId(clientId)
-      if (!user?.backupShare) {
-        console.info(
-          `User ${clientId} does not have a backup share stored in the database`
-        )
-        res.status(400).json({ message: 'User does not have a backup share' })
-        return
-      }
 
+      // Obtain the custodian backup shares for the user.
+      // const backupShares = user.custodianBackupShares.map(
+      //   (backupShare) => backupShare.share
+      // )
+      const legacyBackupShare = user.custodianBackupShares.find(
+        (backupShare) => backupShare.backupMethod === 'UNKNOWN'
+      )?.share
+
+      // Return the custodian backup shares for the user.
       console.info(
-        `Successfully responded with backup share for client ${clientId}`
+        `Successfully responded with custodian backup shares for client ${clientId}`
       )
-      res.status(200).json({ backupShare: user.backupShare })
+      // res.status(200).json({ backupShares })
+      res.status(200).json({ backupShare: legacyBackupShare })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })
@@ -510,6 +573,10 @@ class MobileService {
     console.info(`Querying for userId: ${exchangeUserId}`)
     const user = await this.prisma.user.findUnique({
       where: { exchangeUserId },
+      include: {
+        clientBackupShares: true,
+        custodianBackupShares: true,
+      },
     })
 
     if (!user) {
@@ -526,6 +593,10 @@ class MobileService {
     console.info(`Querying for userId: ${clientId}`)
     const user = await this.prisma.user.findUnique({
       where: { clientId },
+      include: {
+        clientBackupShares: true,
+        custodianBackupShares: true,
+      },
     })
 
     if (!user) {

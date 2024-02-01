@@ -7,43 +7,69 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id             Int     @id @default(autoincrement())
-  walletId       String?
-  exchangeUserId Int     @unique
-  cipherText     String?
-  clientApiKey   String  @unique
-  clientId       String  @unique
-  backupShare    String?
-  username       String  @unique
-  apiSecret      String?
-  apiKey         String?
-  address        String?
-  pushToken      String?
-  wallet         Wallet?
+model ClientBackupShare {
+  backupMethod String       @default("UNKNOWN")
+  createdAt    DateTime     @default(now())
+  id           String       @id @default(cuid())
+  cipherText   String
+  userId       Int
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, backupMethod])
+}
+
+model CustodianBackupShare {
+  backupMethod String       @default("UNKNOWN")
+  createdAt    DateTime     @default(now())
+  id           String       @id @default(cuid())
+  share        String
+  userId       Int
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, backupMethod])
+}
+
+model ExchangeBalance {
+  cachedBalance Decimal @default(0)
+  chainId       Int     @default(4)
+  id            Int     @id @default(autoincrement())
+
+  @@map("exchange_balance")
 }
 
 model MagicCode {
-  id        Int     @id @default(autoincrement())
   code      String
-  email     String
   createdAt DateTime @default(now())
+  email     String
+  id        Int      @id @default(autoincrement())
+}
+
+model User {
+  address        String?
+  apiKey         String?
+  apiSecret      String?
+  clientApiKey   String  @unique
+  clientId       String  @unique
+  exchangeUserId Int     @unique
+  id             Int     @id @default(autoincrement())
+  pushToken      String?
+  username       String  @unique
+  walletId       String?
+
+  clientBackupShares    ClientBackupShare[]
+  custodianBackupShares CustodianBackupShare[]
+  wallet                Wallet?
 }
 
 model Wallet {
   id         String @id @default(cuid())
-  publicKey  String
   privateKey String
-  user       User?  @relation(fields: [userId], references: [id])
+  publicKey  String
   userId     Int?   @unique
 
+  user User? @relation(fields: [userId], references: [id])
+
   @@map("wallets")
-}
-
-model ExchangeBalance {
-  id            Int     @id @default(autoincrement())
-  cachedBalance Decimal @default(0)
-  chainId       Int     @default(4)
-
-  @@map("exchange_balance")
 }

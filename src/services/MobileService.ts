@@ -380,18 +380,33 @@ class MobileService {
 
       // Attempt to find the custodian backup share for the specified backup method.
       const custodianBackupShare = user.custodianBackupShares?.find(
-        (backupShare) => backupShare.backupMethod === backupMethod
+        (custodianBackupShare) =>
+          custodianBackupShare.backupMethod === backupMethod
       )
 
-      // If no custodian backup share was found, return a 404.
-      if (!custodianBackupShare) {
-        console.error(
-          `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
-        )
-        res.status(404).json({ message: 'Custodian backup share not found' })
+      // If custodian backup share was found, return the cipher text.
+      if (custodianBackupShare) {
+        res.status(200).json({ orgShare: custodianBackupShare?.share })
+        return
       }
 
-      res.status(200).json({ orgShare: custodianBackupShare?.share })
+      // If no custodian backup share was found, find the backup share with the legacy backup method.
+      const legacyBackupShare = user.custodianBackupShares.find(
+        (custodianBackupShare) =>
+          custodianBackupShare.backupMethod === 'UNKNOWN'
+      )
+
+      // If a legacy backup share was found, return the cipher text.
+      if (legacyBackupShare) {
+        res.status(200).json({ orgShare: legacyBackupShare?.share })
+        return
+      }
+
+      // If no custodian backup share was found, return a 404.
+      console.error(
+        `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
+      )
+      res.status(404).json({ message: 'Custodian backup share not found' })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })

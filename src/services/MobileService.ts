@@ -279,15 +279,28 @@ class MobileService {
         (clientBackupShare) => clientBackupShare.backupMethod === backupMethod
       )
 
-      // If no client backup share was found, return a 404.
-      if (!clientBackupShare) {
-        console.error(
-          `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
-        )
-        res.status(404).json({ message: 'Client backup share not found' })
+      // If client backup share was found, return the cipher text.
+      if (clientBackupShare) {
+        res.status(200).json({ cipherText: clientBackupShare?.cipherText })
+        return
       }
 
-      res.status(200).json({ cipherText: clientBackupShare?.cipherText })
+      // If no client backup share was found, find the backup share with the legacy backup method.
+      const legacyBackupShare = user.clientBackupShares.find(
+        (clientBackupShare) => clientBackupShare.backupMethod === 'UNKNOWN'
+      )
+
+      // If a legacy backup share was found, return the cipher text.
+      if (legacyBackupShare) {
+        res.status(200).json({ cipherText: legacyBackupShare?.cipherText })
+        return
+      }
+
+      // If no client backup share was found, return a 404.
+      console.error(
+        `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
+      )
+      res.status(404).json({ message: 'Client backup share not found' })
     } catch (error) {
       console.error(error)
       res.status(500).json({ message: 'Internal server error' })

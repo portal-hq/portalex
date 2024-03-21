@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
-import {
-  UnauthorizedError,
-  WrongTokenFormatError
-} from './errors'
+
 import { PrismaClient, User } from '@prisma/client'
+
 import { WEBHOOK_SECRET } from '../config'
+import { UnauthorizedError, WrongTokenFormatError } from './errors'
 
 const prisma = new PrismaClient()
 
@@ -15,7 +14,7 @@ const prisma = new PrismaClient()
 export async function authMiddleware(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   if (!req.headers['x-webhook-secret']) {
     throw new WrongTokenFormatError()

@@ -1,13 +1,15 @@
-import { CUSTODIAN_API_KEY } from '../config'
 import { isAddress } from 'ethers/lib/utils'
-import { PrismaClient, User } from '@prisma/client'
 import { Request, Response } from 'express'
+
+import { PrismaClient, User } from '@prisma/client'
+
+import { CUSTODIAN_API_KEY } from '../config'
+import PortalApi from '../libs/PortalApi'
 import {
   EntityNotFoundError,
   HttpError,
   MissingParameterError,
 } from '../libs/errors'
-import PortalApi from '../libs/PortalApi'
 
 interface ExchangeService {
   getBalance: Function
@@ -20,7 +22,7 @@ class MobileService {
   private portalApi: PortalApi
   constructor(
     private prisma: PrismaClient,
-    private exchangeService: ExchangeService
+    private exchangeService: ExchangeService,
   ) {
     // this.walletService = new WalletService(this.prisma)
     this.portalApi = new PortalApi(CUSTODIAN_API_KEY)
@@ -59,7 +61,7 @@ class MobileService {
         // const wallet = await this.walletService.createWallet()
         const portalClient = await this.portalApi.getClientApiKey(
           user.username,
-          isAccountAbstracted
+          isAccountAbstracted,
         )
         user = await this.prisma.user.update({
           data: {
@@ -108,7 +110,7 @@ class MobileService {
             return null
           }
           throw error
-        }
+        },
       )
 
       if (existingUser && existingUser.clientApiKey) {
@@ -126,13 +128,13 @@ class MobileService {
       while (userAlreadyExists) {
         if (attempt > maxAttempts) {
           throw new Error(
-            'Failed to create user. Could not generate unique id. Try again.'
+            'Failed to create user. Could not generate unique id. Try again.',
           )
         }
 
         exchangeUserId = Math.floor(Math.random() * 100000000)
         console.info(
-          `Attempting to create user with exchangeUserId: ${exchangeUserId}`
+          `Attempting to create user with exchangeUserId: ${exchangeUserId}`,
         )
         await this.getUserByExchangeId(exchangeUserId).catch((error) => {
           if (error instanceof EntityNotFoundError) {
@@ -145,7 +147,7 @@ class MobileService {
       console.info(`Calling portal to create a client api key`)
       const portalClient = await this.portalApi.getClientApiKey(
         username,
-        isAccountAbstracted
+        isAccountAbstracted,
       )
       const user = await this.prisma.user.create({
         data: {
@@ -175,7 +177,7 @@ class MobileService {
   async createUser(username: string, isAccountAbstracted: boolean) {
     const exchangeUserId = Math.floor(Math.random() * 100000000)
     const existingExchangeUser = await this.getUserByExchangeId(
-      exchangeUserId
+      exchangeUserId,
     ).catch((error) => {
       if (error instanceof EntityNotFoundError) {
         return null
@@ -190,7 +192,7 @@ class MobileService {
     console.info(`Calling wallet service to create wallet`)
     const portalClient = await this.portalApi.getClientApiKey(
       username,
-      isAccountAbstracted
+      isAccountAbstracted,
     )
     const user = await this.prisma.user.create({
       data: {
@@ -253,7 +255,7 @@ class MobileService {
       })
 
       console.info(
-        `Successfully stored client backup share for user ${exchangeUserId}`
+        `Successfully stored client backup share for user ${exchangeUserId}`,
       )
       res
         .status(200)
@@ -276,7 +278,7 @@ class MobileService {
 
       // Attempt to find the client backup share for the specified backup method.
       const clientBackupShare = user.clientBackupShares?.find(
-        (clientBackupShare) => clientBackupShare.backupMethod === backupMethod
+        (clientBackupShare) => clientBackupShare.backupMethod === backupMethod,
       )
 
       // If client backup share was found, return the cipher text.
@@ -287,7 +289,7 @@ class MobileService {
 
       // If no client backup share was found, find the backup share with the legacy backup method.
       const legacyBackupShare = user.clientBackupShares.find(
-        (clientBackupShare) => clientBackupShare.backupMethod === 'UNKNOWN'
+        (clientBackupShare) => clientBackupShare.backupMethod === 'UNKNOWN',
       )
 
       // If a legacy backup share was found, return the cipher text.
@@ -298,7 +300,7 @@ class MobileService {
 
       // If no client backup share was found, return a 404.
       console.error(
-        `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
+        `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${backupMethod}]`,
       )
       res.status(404).json({ message: 'Client backup share not found' })
     } catch (error) {
@@ -324,20 +326,20 @@ class MobileService {
       const share = String(req.body['share'])
       if (!share) {
         console.error(
-          '[storeCustodianBackupShare] Did not receive backup share'
+          '[storeCustodianBackupShare] Did not receive backup share',
         )
         throw new Error(
-          '[storeCustodianBackupShare] Did not receive backup share'
+          '[storeCustodianBackupShare] Did not receive backup share',
         )
       }
 
       const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
       if (typeof backupMethod !== 'string') {
         console.error(
-          '[storeCustodianBackupShare] Did not receive backup method as a string'
+          '[storeCustodianBackupShare] Did not receive backup method as a string',
         )
         throw new Error(
-          '[storeCustodianBackupShare] Did not receive backup method as a string'
+          '[storeCustodianBackupShare] Did not receive backup method as a string',
         )
       }
 
@@ -381,7 +383,7 @@ class MobileService {
       // Attempt to find the custodian backup share for the specified backup method.
       const custodianBackupShare = user.custodianBackupShares?.find(
         (custodianBackupShare) =>
-          custodianBackupShare.backupMethod === backupMethod
+          custodianBackupShare.backupMethod === backupMethod,
       )
 
       // If custodian backup share was found, return the cipher text.
@@ -393,7 +395,7 @@ class MobileService {
       // If no custodian backup share was found, find the backup share with the legacy backup method.
       const legacyBackupShare = user.custodianBackupShares.find(
         (custodianBackupShare) =>
-          custodianBackupShare.backupMethod === 'UNKNOWN'
+          custodianBackupShare.backupMethod === 'UNKNOWN',
       )
 
       // If a legacy backup share was found, return the cipher text.
@@ -404,7 +406,7 @@ class MobileService {
 
       // If no custodian backup share was found, return a 404.
       console.error(
-        `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${backupMethod}]`
+        `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${backupMethod}]`,
       )
       res.status(404).json({ message: 'Custodian backup share not found' })
     } catch (error) {
@@ -428,12 +430,12 @@ class MobileService {
 
       // Obtain the custodian backup shares for the user.
       const backupShares = user.custodianBackupShares.map(
-        (backupShare) => backupShare.share
+        (backupShare) => backupShare.share,
       )
 
       // Return the custodian backup shares for the user.
       console.info(
-        `Successfully responded with custodian backup shares for client ${clientId}`
+        `Successfully responded with custodian backup shares for client ${clientId}`,
       )
       res.status(200).json({ backupShares })
     } catch (error) {
@@ -459,12 +461,12 @@ class MobileService {
       // }
 
       console.log(
-        `Transferring ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`
+        `Transferring ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`,
       )
       const txHash = await this.transferExchangeFunds(address, amount, chainId)
 
       console.info(
-        `Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`
+        `Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`,
       )
       res.status(200).json({ txHash })
     } catch (error) {
@@ -502,7 +504,7 @@ class MobileService {
       }
 
       console.info(
-        `Successfully sent balance of ${balance} for user ${exchangeUserId}`
+        `Successfully sent balance of ${balance} for user ${exchangeUserId}`,
       )
 
       res.status(200).json({ balance })
@@ -545,7 +547,7 @@ class MobileService {
       }
 
       console.info(
-        `Successfully updated exchange balance of ${updatedBalance} for user ${exchangeUserId}`
+        `Successfully updated exchange balance of ${updatedBalance} for user ${exchangeUserId}`,
       )
 
       res.status(200).json({ balance: updatedBalance })
@@ -637,7 +639,7 @@ class MobileService {
   private async transferExchangeFunds(
     to: string,
     amount: number,
-    chainId: number
+    chainId: number,
   ) {
     if (!isAddress(to)) {
       throw new Error(`Address ${to} is not a valid ethereum address.`)
@@ -646,7 +648,7 @@ class MobileService {
     const balance = this.exchangeService.getBalance(chainId)
     if (amount >= 0 && Number(balance) < amount) {
       throw new Error(
-        `You're balance of ${balance} is too low to transfer ${amount} ETH (Chain ID: ${chainId}) to your portal wallet`
+        `You're balance of ${balance} is too low to transfer ${amount} ETH (Chain ID: ${chainId}) to your portal wallet`,
       )
     }
 

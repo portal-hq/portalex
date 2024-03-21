@@ -1,13 +1,15 @@
-import 'express-async-errors'
-import cors from 'cors'
+import { isAxiosError } from 'axios'
 import bodyParser from 'body-parser'
-import express, { Application, Request, Response } from 'express'
-import morgan from 'morgan'
-import { PrismaClient } from '@prisma/client'
+import cors from 'cors'
+import { randomUUID } from 'crypto'
 import { Wallet as EthersWallet } from 'ethers'
 import { _TypedDataEncoder } from 'ethers/lib/utils'
-import HotWalletService from './services/HotWalletService'
-import MobileService from './services/MobileService'
+import express, { Application, Request, Response } from 'express'
+import 'express-async-errors'
+import morgan from 'morgan'
+
+import { PrismaClient } from '@prisma/client'
+
 import {
   EXCHANGE_WALLET_ADDRESS,
   EXCHANGE_WALLET_PRIVATE_KEY,
@@ -18,10 +20,10 @@ import {
   MAGIC_LINK_FROM_NAME,
 } from './config'
 import { authMiddleware } from './libs/auth'
-import WebService from './services/WebService'
-import { randomUUID } from 'crypto'
 import SendGridService from './libs/sendgrid'
-import { isAxiosError } from 'axios'
+import HotWalletService from './services/HotWalletService'
+import MobileService from './services/MobileService'
+import WebService from './services/WebService'
 
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
@@ -33,13 +35,13 @@ const exchangePrivateKey =
 const exchangePublicKey = EXCHANGE_WALLET_ADDRESS || exchangeWallet.address
 
 console.info(
-  `\n\nEXCHANGE WALLET PUBLIC ADDRESS: ${exchangePublicKey}\nAdd test eth to this wallet to fund the PortalEx omnibus wallet.\n\n`
+  `\n\nEXCHANGE WALLET PUBLIC ADDRESS: ${exchangePublicKey}\nAdd test eth to this wallet to fund the PortalEx omnibus wallet.\n\n`,
 )
 
 const exchangeService = new HotWalletService(
   prisma,
   exchangePublicKey,
-  exchangePrivateKey
+  exchangePrivateKey,
 )
 const mobileService: MobileService = new MobileService(prisma, exchangeService)
 const webService = new WebService(prisma)
@@ -94,8 +96,8 @@ app.post('/magic/new', async (req, res) => {
     if (isAxiosError(err)) {
       console.error(
         `Received ${err.response?.status} from SendGrid: ${JSON.stringify(
-          err.response?.data
-        )}`
+          err.response?.data,
+        )}`,
       )
     } else {
       console.error(err)
@@ -158,7 +160,7 @@ app.get(
     } else {
       res.sendStatus(401)
     }
-  }
+  },
 )
 
 /*
@@ -172,7 +174,7 @@ app.post(
   '/mobile/:exchangeUserId/balance/refresh',
   async (req: any, res: any) => {
     await mobileService.refreshExchangeBalance(req, res)
-  }
+  },
 )
 
 app.post('/mobile/:exchangeUserId/transfer', async (req: any, res: any) => {
@@ -183,14 +185,14 @@ app.get(
   '/mobile/:exchangeUserId/org-share/fetch',
   async (req: any, res: any) => {
     await mobileService.getCustodianBackupShare(req, res)
-  }
+  },
 )
 
 app.get(
   '/mobile/:exchangeUserId/cipher-text/fetch',
   async (req: any, res: any) => {
     await mobileService.getClientBackupShare(req, res)
-  }
+  },
 )
 
 app.post('/mobile/:exchangeUserId/cipher-text', async (req: any, res: any) => {
@@ -205,11 +207,11 @@ app.get(
   }),
   async (req: Request, res: Response) => {
     const webOtp = await webService.getWebOtp(
-      parseInt(req.params.exchangeUserId)
+      parseInt(req.params.exchangeUserId),
     )
 
     res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
-  }
+  },
 )
 
 app.get('/portal/:exchangeUserId/otp', async (req: Request, res: Response) => {
@@ -226,7 +228,7 @@ app.post(
   async (req: any, res: any) => {
     console.log('Requested by IP address:', req.ip, req.headers)
     await mobileService.getCustodianBackupShares(req, res)
-  }
+  },
 )
 
 app.post('/webhook/backup', authMiddleware, async (req: any, res: any) => {
@@ -235,5 +237,5 @@ app.post('/webhook/backup', authMiddleware, async (req: any, res: any) => {
 })
 
 app.listen(port, () =>
-  console.log(`PortalEx Server listening on port ${port}!`)
+  console.log(`PortalEx Server listening on port ${port}!`),
 )

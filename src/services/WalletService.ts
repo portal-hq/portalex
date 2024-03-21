@@ -1,6 +1,7 @@
-import { PrismaClient, Wallet } from '@prisma/client'
 import { Wallet as EthersWallet } from 'ethers'
 import { SigningKey } from 'ethers/lib/utils'
+
+import { PrismaClient, Wallet } from '@prisma/client'
 
 export default class WalletService {
   constructor(private prisma: PrismaClient) {}
@@ -21,7 +22,7 @@ export default class WalletService {
     return wallet
   }
 
-   /**
+  /**
    * Uses the address of a user to get their private key and make a signing object
    *
    * @returns SigningKey
@@ -36,7 +37,7 @@ export default class WalletService {
     return new SigningKey(wallet.privateKey)
   }
 
-     /**
+  /**
    * Uses the address of a user to get their private key and return it
    *
    * @returns PrivateKey

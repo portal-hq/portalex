@@ -17,7 +17,7 @@ class SendGridService {
   constructor(private key: string) {
     this.client = axios.create({
       baseURL: SENDGRID_URL,
-      headers: { Authorization: `Bearer ${key}` }
+      headers: { Authorization: `Bearer ${key}` },
     })
   }
 
@@ -30,9 +30,9 @@ class SendGridService {
         content: [
           {
             type: 'text/plain',
-            value: params.body
-          }
-        ]
+            value: params.body,
+          },
+        ],
       })
     } catch (error) {
       throw error

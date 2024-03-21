@@ -27,4 +27,4 @@ async function seedDemo() {
   await portalApi.registerWebhook(WEBHOOK_URL, WEBHOOK_SECRET) // demo custodian id
 }
 
-seedDemo()
+void seedDemo()

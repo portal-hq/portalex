@@ -1,7 +1,6 @@
+import { PrismaClient, Wallet } from '@prisma/client'
 import { Wallet as EthersWallet } from 'ethers'
 import { SigningKey } from 'ethers/lib/utils'
-
-import { PrismaClient, Wallet } from '@prisma/client'
 
 export default class WalletService {
   constructor(private prisma: PrismaClient) {}
@@ -12,8 +11,8 @@ export default class WalletService {
    * @returns wallet
    */
   async createWallet(): Promise<Wallet> {
-    let ethersWallet = EthersWallet.createRandom()
-    let wallet = await this.prisma.wallet.create({
+    const ethersWallet = EthersWallet.createRandom()
+    const wallet = await this.prisma.wallet.create({
       data: {
         publicKey: ethersWallet.address,
         privateKey: ethersWallet.privateKey,

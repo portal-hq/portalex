@@ -1,17 +1,16 @@
+import { PrismaClient } from '@prisma/client'
 import { Request, Response, NextFunction } from 'express'
-
-import { PrismaClient, User } from '@prisma/client'
 
 import { WEBHOOK_SECRET } from '../config'
 import { UnauthorizedError, WrongTokenFormatError } from './errors'
 
-const prisma = new PrismaClient()
+new PrismaClient()
 
 /**
  * Middleware to verify the webhook request is authenticated
  *
  */
-export async function authMiddleware(
+export function authMiddleware(
   req: Request,
   res: Response,
   next: NextFunction,

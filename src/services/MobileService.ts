@@ -1,7 +1,6 @@
+import { PrismaClient, User } from '@prisma/client'
 import { isAddress } from 'ethers/lib/utils'
 import { Request, Response } from 'express'
-
-import { PrismaClient, User } from '@prisma/client'
 
 import { CUSTODIAN_API_KEY } from '../config'
 import PortalApi from '../libs/PortalApi'
@@ -12,8 +11,12 @@ import {
 } from '../libs/errors'
 
 interface ExchangeService {
-  getBalance: Function
-  sendTransaction: Function
+  getBalance: (chainId: number) => Promise<string>
+  sendTransaction: (
+    to: string,
+    amount: number,
+    chainId: number,
+  ) => Promise<string | void>
   address: string
 }
 
@@ -33,7 +36,10 @@ class MobileService {
    */
   async login(req: Request, res: Response): Promise<void> {
     try {
-      let { username, isAccountAbstracted } = req.body
+      let { username, isAccountAbstracted } = req.body as {
+        username: string
+        isAccountAbstracted: boolean
+      }
       if (!username || username === '') {
         throw new MissingParameterError('username')
       }
@@ -94,9 +100,12 @@ class MobileService {
    *  sends INIT_AMOUNT from exchange to new portal wallet
    * Stores: exchangeUserId, pushToken, walletId, apiKey, apiSecret, address
    */
-  async signUp(req: any, res: any): Promise<void> {
+  async signUp(req: Request, res: Response): Promise<void> {
     try {
-      let { username, isAccountAbstracted } = req.body
+      let { username, isAccountAbstracted } = req.body as {
+        username: string
+        isAccountAbstracted: boolean
+      }
       if (!username || username === '') {
         throw new MissingParameterError('username')
       }
@@ -209,7 +218,7 @@ class MobileService {
   /*
    * Sends the walletId for an exchangeUserId
    */
-  async sendWalletId(req: any, res: any): Promise<void> {
+  async sendWalletId(req: Request, res: Response): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const user = await this.getUserByExchangeId(exchangeUserId)
@@ -225,7 +234,7 @@ class MobileService {
   /*
    * Store the client backup share for a user.
    */
-  async storeClientBackupShare(req: any, res: any): Promise<void> {
+  async storeClientBackupShare(req: Request, res: Response): Promise<void> {
     try {
       const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
       const cipherText = String(req.body['cipherText'])
@@ -269,7 +278,7 @@ class MobileService {
   /*
    * Get the client backup share for a user.
    */
-  async getClientBackupShare(req: any, res: any): Promise<void> {
+  async getClientBackupShare(req: Request, res: Response): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const backupMethod = req.query.backupMethod || 'UNKNOWN'
@@ -300,7 +309,9 @@ class MobileService {
 
       // If no client backup share was found, return a 404.
       console.error(
-        `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${backupMethod}]`,
+        `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${
+          backupMethod as string
+        }]`,
       )
       res.status(404).json({ message: 'Client backup share not found' })
     } catch (error) {
@@ -312,10 +323,14 @@ class MobileService {
   /*
    * Store the custodian backup share for a user.
    */
-  async storeCustodianBackupShare(req: any, res: any): Promise<void> {
+  async storeCustodianBackupShare(req: Request, res: Response): Promise<void> {
     try {
       // Obtain the clientId from the request body.
-      const clientId = req.body['clientId']
+      const { clientId } = req.body as { clientId: string }
+      let { backupMethod, share } = req.body as {
+        backupMethod: string
+        share: string | Record<string, any>
+      }
       if (!clientId) {
         console.error('[storeCustodianBackupShare] Did not receive clientId')
         throw new Error('[storeCustodianBackupShare] Did not receive clientId')
@@ -323,7 +338,7 @@ class MobileService {
       console.info(`Storing backup share for client ${clientId}`)
 
       // Obtain the custodian backup share from the request body.
-      const share = String(req.body['share'])
+      share = String(share)
       if (!share) {
         console.error(
           '[storeCustodianBackupShare] Did not receive backup share',
@@ -333,7 +348,7 @@ class MobileService {
         )
       }
 
-      const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
+      backupMethod = backupMethod || 'UNKNOWN'
       if (typeof backupMethod !== 'string') {
         console.error(
           '[storeCustodianBackupShare] Did not receive backup method as a string',
@@ -373,7 +388,7 @@ class MobileService {
   /*
    * Get the custodian backup share for a user.
    */
-  async getCustodianBackupShare(req: any, res: any): Promise<void> {
+  async getCustodianBackupShare(req: Request, res: Response): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const backupMethod = req.query.backupMethod || 'UNKNOWN'
@@ -406,7 +421,9 @@ class MobileService {
 
       // If no custodian backup share was found, return a 404.
       console.error(
-        `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${backupMethod}]`,
+        `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${
+          backupMethod as string
+        }]`,
       )
       res.status(404).json({ message: 'Custodian backup share not found' })
     } catch (error) {
@@ -418,9 +435,9 @@ class MobileService {
   /*
    * Get the custodian backup shares for a user.
    */
-  async getCustodianBackupShares(req: any, res: any): Promise<void> {
+  async getCustodianBackupShares(req: Request, res: Response): Promise<void> {
     try {
-      const clientId = req.body['clientId']
+      const { clientId } = req.body as { clientId: string }
       if (!clientId) {
         console.error('[getCustodianBackupShares] Did not receive clientId')
         throw new Error('[getCustodianBackupShares] Did not receive clientId')
@@ -447,12 +464,12 @@ class MobileService {
   /*
    * Transfers an amount of eth from the exchange to the users wallet.
    */
-  async transferFunds(req: any, res: any): Promise<void> {
+  async transferFunds(req: Request, res: Response): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const amount = Number(req.body['amount'])
       const chainId = Number(req.body['chainId'])
-      const address = req.body['address']
+      const address: string = req.body['address']
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
@@ -478,14 +495,14 @@ class MobileService {
   /*
    * Get the balance of an exchange account for an exchangeUserId
    */
-  async getExchangeBalance(req: any, res: any): Promise<void> {
+  async getExchangeBalance(req: Request, res: Response): Promise<void> {
     try {
-      const exchangeUserId = Number(req.params['exchangeUserId'])
+      const exchangeUserId: number = Number(req.params['exchangeUserId'])
 
       if (!('chainId' in req.query)) {
         throw new Error('Chain id is required for getting the balance')
       }
-      const chainId = Number(req.query['chainId'])
+      const chainId: number = Number(req.query['chainId'])
 
       const cache = await this.prisma.exchangeBalance.findFirst({
         where: { chainId },
@@ -517,7 +534,7 @@ class MobileService {
   /*
    * Force a refresh of the exchange balance, and return the new value
    */
-  async refreshExchangeBalance(req: any, res: any): Promise<void> {
+  async refreshExchangeBalance(req: Request, res: Response): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const chainId = Number(req.body['chainId'])
@@ -560,7 +577,7 @@ class MobileService {
   /*
    * Sends the address of the portal wallet for an exchangeUserId
    */
-  async sendAddress(req: any, res: any): Promise<void> {
+  async sendAddress(req: Request, res: Response): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const user = await this.getUserByExchangeId(exchangeUserId)
@@ -645,7 +662,7 @@ class MobileService {
       throw new Error(`Address ${to} is not a valid ethereum address.`)
     }
 
-    const balance = this.exchangeService.getBalance(chainId)
+    const balance = await this.exchangeService.getBalance(chainId)
     if (amount >= 0 && Number(balance) < amount) {
       throw new Error(
         `You're balance of ${balance} is too low to transfer ${amount} ETH (Chain ID: ${chainId}) to your portal wallet`,
@@ -654,7 +671,7 @@ class MobileService {
 
     return this.exchangeService
       .sendTransaction(to, amount, chainId)
-      .then((txHash: string) => {
+      .then((txHash) => {
         console.info(`Transaction submitted, txHash: ${txHash}`)
         return txHash
       })

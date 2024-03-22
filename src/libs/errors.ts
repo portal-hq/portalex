@@ -34,8 +34,7 @@ export class UnauthorizedError extends HttpError {
 }
 
 export class WrongTokenFormatError extends HttpError {
-  public static readonly Msg =
-    'Incorrect token format'
+  public static readonly Msg = 'Incorrect token format'
   public static readonly HttpStatus = HttpStatusCodes.UNAUTHORIZED
 
   constructor() {

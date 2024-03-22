@@ -1,13 +1,14 @@
+import { PrismaClient } from '@prisma/client'
 import { ethers, utils, Wallet } from 'ethers'
 import { isAddress } from 'ethers/lib/utils'
-import { PrismaClient } from '@prisma/client'
+
 import { chainToName } from '../libs/utils'
 
 class HotWalletService {
   constructor(
     private prisma: PrismaClient,
     public address: string,
-    private privateKey: string
+    private privateKey: string,
   ) {}
   /*
    * returns (String) Users account balance of Ether in USD.
@@ -27,11 +28,11 @@ class HotWalletService {
    */
   async sendTransaction(to: string, amount: number, chainId: number) {
     let from = this.address
-    let privateKey = this.privateKey
+    const privateKey = this.privateKey
 
     if (!this.privateKey) {
       throw new Error(
-        'No exchange private key configured. Cannot transfer funds.'
+        'No exchange private key configured. Cannot transfer funds.',
       )
     }
 
@@ -52,12 +53,12 @@ class HotWalletService {
       const toBalance = await provider.getBalance(to)
       if (toBalance.lt(utils.parseEther(amount.toString()))) {
         throw new Error(
-          `Address ${to} does not have a high enough balance (${toBalance} to transfer ${amount} eth out`
+          `Address ${to} does not have a high enough balance (${toBalance} to transfer ${amount} eth out`,
         )
       }
 
       throw new Error(
-        `Transfers from the web3 wallet back to the exchange wallet are not supported yet.`
+        `Transfers from the web3 wallet back to the exchange wallet are not supported yet.`,
       )
     }
 

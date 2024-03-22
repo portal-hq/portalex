@@ -1,0 +1,6 @@
+dist
+scripts
+test
+build.ts
+*.test.ts
+*.js

@@ -1,4 +1,5 @@
 import axios, { AxiosError, isAxiosError } from 'axios'
+
 import { PORTAL_API_URL } from '../config'
 
 type PortalClientResponse = {
@@ -17,7 +18,7 @@ class PortalApi {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
           },
-        }
+        },
       )
 
       return data.otp
@@ -27,9 +28,7 @@ class PortalApi {
         console.error(`Error getting Web OTP: `, err)
         throw {
           status: err.response?.status,
-          message: `Portal API Error: ${
-            err.response?.data['error']
-          }`,
+          message: `Portal API Error: ${err.response?.data['error']}`,
         }
       } else {
         throw {
@@ -47,10 +46,10 @@ class PortalApi {
    */
   async getClientApiKey(
     username: string,
-    isAccountAbstracted: boolean
+    isAccountAbstracted: boolean,
   ): Promise<PortalClientResponse> {
     console.info(
-      `Requesting Client API Key from Connect API for user: ${username}, ${PORTAL_API_URL}, ${this.apiKey}`
+      `Requesting Client API Key from Connect API for user: ${username}, ${PORTAL_API_URL}, ${this.apiKey}`,
     )
     return await axios
       .post(
@@ -62,7 +61,7 @@ class PortalApi {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
           },
-        }
+        },
       )
       .then((res) => {
         return res.data
@@ -93,7 +92,7 @@ class PortalApi {
         { webhook: webhookUri, secret: webhookSecret },
         {
           headers: headers,
-        }
+        },
       )
       .catch((err: AxiosError) => {
         const errorData = err.response?.data as {

@@ -1,9 +1,10 @@
 import dotenv from 'dotenv'
+
 dotenv.config()
 
 // Exchange Setup
 export const EXCHANGE_WALLET_ADDRESS = process.env.EXCHANGE_WALLET_ADDRESS || ''
-export let EXCHANGE_WALLET_PRIVATE_KEY =
+export const EXCHANGE_WALLET_PRIVATE_KEY =
   process.env.EXCHANGE_WALLET_PRIVATE_KEY || ''
 export const INIT_AMOUNT = Number(process.env.INIT_AMOUNT) || 0.01
 

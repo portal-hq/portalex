@@ -11,8 +11,8 @@ export default class WalletService {
    * @returns wallet
    */
   async createWallet(): Promise<Wallet> {
-    let ethersWallet = EthersWallet.createRandom()
-    let wallet = await this.prisma.wallet.create({
+    const ethersWallet = EthersWallet.createRandom()
+    const wallet = await this.prisma.wallet.create({
       data: {
         publicKey: ethersWallet.address,
         privateKey: ethersWallet.privateKey,
@@ -21,7 +21,7 @@ export default class WalletService {
     return wallet
   }
 
-   /**
+  /**
    * Uses the address of a user to get their private key and make a signing object
    *
    * @returns SigningKey
@@ -36,7 +36,7 @@ export default class WalletService {
     return new SigningKey(wallet.privateKey)
   }
 
-     /**
+  /**
    * Uses the address of a user to get their private key and return it
    *
    * @returns PrivateKey

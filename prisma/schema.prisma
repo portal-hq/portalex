@@ -8,27 +8,25 @@ datasource db {
 }
 
 model ClientBackupShare {
-  backupMethod String       @default("UNKNOWN")
-  createdAt    DateTime     @default(now())
-  id           String       @id @default(cuid())
-  cipherText   String
-  userId       Int
+  backupMethod      String  @default("UNKNOWN")
+  backupSharePairId String?
+  createdAt         DateTime @default(now())
+  id                String   @id @default(cuid())
+  cipherText        String
+  userId            Int
 
   user User @relation(fields: [userId], references: [id])
-
-  @@unique([userId, backupMethod])
 }
 
 model CustodianBackupShare {
-  backupMethod String       @default("UNKNOWN")
-  createdAt    DateTime     @default(now())
-  id           String       @id @default(cuid())
-  share        String
-  userId       Int
+  backupMethod      String  @default("UNKNOWN")
+  backupSharePairId String?
+  createdAt         DateTime @default(now())
+  id                String   @id @default(cuid())
+  share             String
+  userId            Int
 
   user User @relation(fields: [userId], references: [id])
-
-  @@unique([userId, backupMethod])
 }
 
 model ExchangeBalance {

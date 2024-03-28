@@ -237,6 +237,7 @@ class MobileService {
   async storeClientBackupShare(req: Request, res: Response): Promise<void> {
     try {
       const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
+      const backupSharePairId = req.body['backupSharePairId'] || null
       const cipherText = String(req.body['cipherText'])
       const exchangeUserId = Number(req.params['exchangeUserId'])
 
@@ -246,10 +247,11 @@ class MobileService {
         throw new Error('Client did not send the cipher text')
       }
 
-      // Remove any existing client backup shares for this backup method.
+      // Delete any client backup shares that already exists with the same backupMethod, backupSharePairId, and userId.
       await this.prisma.clientBackupShare.deleteMany({
         where: {
           backupMethod,
+          backupSharePairId,
           userId: user.id,
         },
       })
@@ -258,13 +260,14 @@ class MobileService {
       await this.prisma.clientBackupShare.create({
         data: {
           backupMethod,
+          backupSharePairId,
           cipherText,
           userId: user.id,
         },
       })
 
       console.info(
-        `Successfully stored client backup share for user ${exchangeUserId}`,
+        `Successfully stored client backup share for user ${exchangeUserId} with backupMethod ${backupMethod} and backupSharePairId ${backupSharePairId}`,
       )
       res
         .status(200)
@@ -282,12 +285,16 @@ class MobileService {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const backupMethod = req.query.backupMethod || 'UNKNOWN'
+      const backupSharePairId = req.query.backupSharePairId
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
-      // Attempt to find the client backup share for the specified backup method.
+      // Attempt to find the client backup share by backupSharePairId or by backup method as a fallback.
       const clientBackupShare = user.clientBackupShares?.find(
-        (clientBackupShare) => clientBackupShare.backupMethod === backupMethod,
+        (clientBackupShare) =>
+          backupSharePairId
+            ? clientBackupShare.backupSharePairId === backupSharePairId
+            : clientBackupShare.backupMethod === backupMethod,
       )
 
       // If client backup share was found, return the cipher text.
@@ -326,8 +333,11 @@ class MobileService {
   async storeCustodianBackupShare(req: Request, res: Response): Promise<void> {
     try {
       // Obtain the clientId from the request body.
-      const { clientId } = req.body as { clientId: string }
-      let { backupMethod, share } = req.body as {
+      const { clientId } = req.body as {
+        clientId: string
+      }
+      let { backupSharePairId, backupMethod, share } = req.body as {
+        backupSharePairId: string | null
         backupMethod: string
         share: string | Record<string, any>
       }
@@ -336,6 +346,9 @@ class MobileService {
         throw new Error('[storeCustodianBackupShare] Did not receive clientId')
       }
       console.info(`Storing backup share for client ${clientId}`)
+
+      // Ensure that backupSharePairId is a string or null, not undefined.
+      backupSharePairId = backupSharePairId || null
 
       // Obtain the custodian backup share from the request body.
       share = String(share)
@@ -360,10 +373,11 @@ class MobileService {
 
       const user = await this.getUserByClientId(clientId)
 
-      // Remove any existing custodian backup shares for this backup method.
+      // Delete any custodian backup shares that already exists with the same backupMethod, backupSharePairId, and userId.
       await this.prisma.custodianBackupShare.deleteMany({
         where: {
           backupMethod,
+          backupSharePairId,
           userId: user.id,
         },
       })
@@ -372,6 +386,7 @@ class MobileService {
       await this.prisma.custodianBackupShare.create({
         data: {
           backupMethod,
+          backupSharePairId,
           share,
           userId: user.id,
         },
@@ -392,13 +407,16 @@ class MobileService {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const backupMethod = req.query.backupMethod || 'UNKNOWN'
+      const backupSharePairId = req.query.backupSharePairId
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
-      // Attempt to find the custodian backup share for the specified backup method.
+      // Attempt to find the custodian backup share by backupSharePairId or by backup method as a fallback.
       const custodianBackupShare = user.custodianBackupShares?.find(
         (custodianBackupShare) =>
-          custodianBackupShare.backupMethod === backupMethod,
+          backupSharePairId
+            ? custodianBackupShare.backupSharePairId === backupSharePairId
+            : custodianBackupShare.backupMethod === backupMethod,
       )
 
       // If custodian backup share was found, return the cipher text.

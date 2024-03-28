@@ -237,7 +237,7 @@ class MobileService {
   async storeClientBackupShare(req: Request, res: Response): Promise<void> {
     try {
       const backupMethod = req.body['backupMethod'] || 'UNKNOWN'
-      const backupSharePairId = req.body['backupSharePairId']
+      const backupSharePairId = req.body['backupSharePairId'] || null
       const cipherText = String(req.body['cipherText'])
       const exchangeUserId = Number(req.params['exchangeUserId'])
 
@@ -246,6 +246,15 @@ class MobileService {
       if (!cipherText) {
         throw new Error('Client did not send the cipher text')
       }
+
+      // Delete any client backup shares that already exists with the same backupMethod, backupSharePairId, and userId.
+      await this.prisma.clientBackupShare.deleteMany({
+        where: {
+          backupMethod,
+          backupSharePairId,
+          userId: user.id,
+        },
+      })
 
       // Store the client backup share.
       await this.prisma.clientBackupShare.create({
@@ -324,11 +333,11 @@ class MobileService {
   async storeCustodianBackupShare(req: Request, res: Response): Promise<void> {
     try {
       // Obtain the clientId from the request body.
-      const { backupSharePairId, clientId } = req.body as {
-        backupSharePairId: string
+      const { clientId } = req.body as {
         clientId: string
       }
-      let { backupMethod, share } = req.body as {
+      let { backupSharePairId, backupMethod, share } = req.body as {
+        backupSharePairId: string | null
         backupMethod: string
         share: string | Record<string, any>
       }
@@ -337,6 +346,9 @@ class MobileService {
         throw new Error('[storeCustodianBackupShare] Did not receive clientId')
       }
       console.info(`Storing backup share for client ${clientId}`)
+
+      // Ensure that backupSharePairId is a string or null, not undefined.
+      backupSharePairId = backupSharePairId || null
 
       // Obtain the custodian backup share from the request body.
       share = String(share)
@@ -360,6 +372,15 @@ class MobileService {
       }
 
       const user = await this.getUserByClientId(clientId)
+
+      // Delete any custodian backup shares that already exists with the same backupMethod, backupSharePairId, and userId.
+      await this.prisma.custodianBackupShare.deleteMany({
+        where: {
+          backupMethod,
+          backupSharePairId,
+          userId: user.id,
+        },
+      })
 
       // Store the custodian backup share.
       await this.prisma.custodianBackupShare.create({

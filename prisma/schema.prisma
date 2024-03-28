@@ -16,6 +16,8 @@ model ClientBackupShare {
   userId            Int
 
   user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, backupMethod, backupSharePairId])
 }
 
 model CustodianBackupShare {
@@ -27,6 +29,8 @@ model CustodianBackupShare {
   userId            Int
 
   user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, backupMethod, backupSharePairId])
 }
 
 model ExchangeBalance {

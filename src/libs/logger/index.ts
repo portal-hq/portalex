@@ -1,6 +1,6 @@
 import { createLogger, format, transports } from 'winston'
 
-import { WinstonConfig, ServerConfig, env } from '../../config'
+import { WinstonConfig, ServerConfig, loggerEnv } from '../../config'
 
 const { combine, timestamp, label, printf, colorize, errors, metadata } = format
 
@@ -22,14 +22,14 @@ export const localFormat = printf(({ level, message, label, timestamp }) => {
 
 /*
  * Standard logger powered by Winston. Prints nice messages to console when
- * env == 'dev', otherwise sends it to Datadog.
- * Attaches standard metadata (env, service, host)
+ * loggerEnv == 'dev', otherwise sends it to Datadog.
+ * Attaches standard metadata (loggerEnv, service, host)
  */
 export const logger = createLogger({
   level: WinstonConfig.level,
   exitOnError: false,
   format:
-    env === 'dev'
+    loggerEnv === 'dev'
       ? combine(
           errors({ stack: true }),
           label({ label: ServerConfig.serviceName }),
@@ -40,13 +40,13 @@ export const logger = createLogger({
         )
       : format.json(),
   transports: [
-    env === 'dev'
+    loggerEnv === 'dev'
       ? new transports.Console()
       : new transports.Http(transporterOption),
   ],
   silent: WinstonConfig.silent,
   defaultMeta: {
-    env,
+    env: loggerEnv,
     service: ServerConfig.serviceName,
     host: ServerConfig.host,
   },

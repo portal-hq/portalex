@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-export const env = process.env.NODE_ENV || 'dev'
+export const loggerEnv = process.env.DD_ENVIRONMENT || 'dev'
 
 // Exchange Setup
 export const EXCHANGE_WALLET_ADDRESS = process.env.EXCHANGE_WALLET_ADDRESS || ''

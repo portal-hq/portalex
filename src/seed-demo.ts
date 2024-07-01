@@ -2,17 +2,18 @@ import { PrismaClient } from '@prisma/client'
 
 import { CUSTODIAN_API_KEY, WEBHOOK_URL, WEBHOOK_SECRET } from './config'
 import PortalApi from './libs/PortalApi'
+import { logger } from './libs/logger'
 import HotWalletService from './services/HotWalletService'
 import MobileService from './services/MobileService'
 
 async function seedDemo() {
   if (!CUSTODIAN_API_KEY || CUSTODIAN_API_KEY === 'test-api-key') {
-    console.log('CUSTODIAN_API_KEY env var missing.')
+    logger.info('CUSTODIAN_API_KEY env var missing.')
     process.exit()
   }
 
   if (!WEBHOOK_URL) {
-    console.log('WEBHOOK_URL env var missing.')
+    logger.info('WEBHOOK_URL env var missing.')
     process.exit()
   }
 

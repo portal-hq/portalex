@@ -1,6 +1,7 @@
 import axios, { AxiosError, isAxiosError } from 'axios'
 
 import { PORTAL_API_URL } from '../config'
+import { logger } from '../libs/logger'
 
 type PortalClientResponse = {
   id: string
@@ -25,7 +26,7 @@ class PortalApi {
     } catch (err) {
       if (isAxiosError(err)) {
         err as AxiosError
-        console.error(`Error getting Web OTP: `, err)
+        logger.error(`Error getting Web OTP: `, err)
         throw {
           status: err.response?.status,
           message: `Portal API Error: ${err.response?.data['error']}`,
@@ -48,7 +49,7 @@ class PortalApi {
     username: string,
     isAccountAbstracted: boolean,
   ): Promise<PortalClientResponse> {
-    console.info(
+    logger.info(
       `Requesting Client API Key from Connect API for user: ${username}, ${PORTAL_API_URL}, ${this.apiKey}`,
     )
     return await axios

@@ -18,6 +18,7 @@ import {
   MAGIC_LINK_FROM_NAME,
 } from './config'
 import { authMiddleware } from './libs/auth'
+import { logger } from './libs/logger'
 import SendGridService from './libs/sendgrid'
 import HotWalletService from './services/HotWalletService'
 import MobileService from './services/MobileService'
@@ -32,7 +33,7 @@ const exchangePrivateKey =
   EXCHANGE_WALLET_PRIVATE_KEY || exchangeWallet.privateKey
 const exchangePublicKey = EXCHANGE_WALLET_ADDRESS || exchangeWallet.address
 
-console.info(
+logger.info(
   `\n\nEXCHANGE WALLET PUBLIC ADDRESS: ${exchangePublicKey}\nAdd test eth to this wallet to fund the PortalEx omnibus wallet.\n\n`,
 )
 
@@ -77,7 +78,7 @@ app.post('/magic/new', async (req, res) => {
   const magicLink = `${MAGIC_LINK_REDIRECT_URL}/magic/verify?code=${code}`
 
   try {
-    console.log(`Sending magic link to ${email}`)
+    logger.info(`Sending magic link to ${email}`)
 
     const sendgrid = new SendGridService(SENDGRID_API_KEY)
     await sendgrid.sendEmail({
@@ -92,13 +93,13 @@ app.post('/magic/new', async (req, res) => {
     res.sendStatus(200)
   } catch (err) {
     if (isAxiosError(err)) {
-      console.error(
+      logger.error(
         `Received ${err.response?.status} from SendGrid: ${JSON.stringify(
           err.response?.data,
         )}`,
       )
     } else {
-      console.error(err)
+      logger.error(err)
     }
 
     res.sendStatus(500)
@@ -124,7 +125,7 @@ app.get(
     })
 
     if (magicCode) {
-      console.log(`Successfully verified magic link for ${magicCode.email}`)
+      logger.info(`Successfully verified magic link for ${magicCode.email}`)
 
       // remove the code now that it's been used
       await prisma.magicCode.delete({
@@ -144,7 +145,7 @@ app.get(
 
       if (!user) {
         user = await mobileService.createUser(email, false)
-        console.log(`Created new user ${email}`)
+        logger.info(`Created new user ${email}`)
       }
 
       // set the logged in user
@@ -233,7 +234,7 @@ app.post(
   '/webhook/backup/fetch',
   authMiddleware,
   async (req: Request, res: Response) => {
-    console.log('Requested by IP address:', req.ip, req.headers)
+    logger.info('Requested by IP address:', req.ip, req.headers)
     await mobileService.getCustodianBackupShares(req, res)
   },
 )
@@ -242,11 +243,11 @@ app.post(
   '/webhook/backup',
   authMiddleware,
   async (req: Request, res: Response) => {
-    console.log('Requested by IP address:', req.ip, req.headers)
+    logger.info('Requested by IP address:', req.ip, req.headers)
     await mobileService.storeCustodianBackupShare(req, res)
   },
 )
 
 app.listen(port, () =>
-  console.log(`PortalEx Server listening on port ${port}!`),
+  logger.info(`PortalEx Server listening on port ${port}!`),
 )

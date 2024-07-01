@@ -2,6 +2,8 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
+export const env = process.env.NODE_ENV || 'dev'
+
 // Exchange Setup
 export const EXCHANGE_WALLET_ADDRESS = process.env.EXCHANGE_WALLET_ADDRESS || ''
 export const EXCHANGE_WALLET_PRIVATE_KEY =
@@ -29,3 +31,16 @@ export const MAGIC_LINK_FROM_EMAIL =
   process.env.MAGIC_LINK_FROM_EMAIL || 'david@portalhq.io'
 export const MAGIC_LINK_FROM_NAME =
   process.env.MAGIC_LINK_FROM_NAME || 'Portal Demo (David)'
+
+// Logging Setup
+export const WinstonConfig = {
+  level: process.env.LOG_LEVEL || 'debug',
+  silent: process.env.LOGGER_SILENT === 'true' || false,
+  datadogKey: process.env.DD_API_KEY || '',
+}
+
+// Server Setup
+export const ServerConfig = {
+  host: process.env.HOST || '',
+  serviceName: 'portalex',
+}

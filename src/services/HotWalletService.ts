@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { ethers, utils, Wallet } from 'ethers'
 import { isAddress } from 'ethers/lib/utils'
 
+import { logger } from '../libs/logger'
 import { chainToName } from '../libs/utils'
 
 class HotWalletService {
@@ -76,10 +77,13 @@ class HotWalletService {
     return await wallet
       .sendTransaction(tx)
       .then((res) => {
-        console.info(`Transaction submitted: ${res.hash}`)
+        logger.info(`Transaction submitted: ${res.hash}`)
         return res.hash
       })
-      .catch(console.error)
+      .catch((error) => {
+        logger.error(`Error sending transaction: ${error}`)
+        throw error
+      })
   }
 }
 export default HotWalletService

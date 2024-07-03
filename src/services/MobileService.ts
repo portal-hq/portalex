@@ -9,6 +9,7 @@ import {
   HttpError,
   MissingParameterError,
 } from '../libs/errors'
+import { logger } from '../libs/logger'
 
 interface ExchangeService {
   getBalance: (chainId: number) => Promise<string>
@@ -47,11 +48,11 @@ class MobileService {
       username = String(username)
       isAccountAbstracted = Boolean(isAccountAbstracted)
 
-      console.info(`Attempting to login user: ${username}`)
+      logger.info(`Attempting to login user: ${username}`)
 
       let user = await this.getUserByUsername(username).catch((error) => {
         if (error instanceof EntityNotFoundError) {
-          console.error(`Failed login for user ${username}`)
+          logger.error(`Failed login for user ${username}`)
           res
             .status(401)
             .json({ message: `Could not find a user with ${username}` })
@@ -76,7 +77,7 @@ class MobileService {
           },
           where: { id: user.id },
         })
-        console.info(`Created a new API key for ${username}`)
+        logger.info(`Created a new API key for ${username}`)
       }
 
       res.status(200).json({
@@ -89,7 +90,7 @@ class MobileService {
         return
       }
 
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -123,7 +124,7 @@ class MobileService {
       )
 
       if (existingUser && existingUser.clientApiKey) {
-        console.info(`${username} already exists`)
+        logger.info(`${username} already exists`)
         res.status(400).json({ message: `User already exists ${username}` })
         return
       }
@@ -142,7 +143,7 @@ class MobileService {
         }
 
         exchangeUserId = Math.floor(Math.random() * 100000000)
-        console.info(
+        logger.info(
           `Attempting to create user with exchangeUserId: ${exchangeUserId}`,
         )
         await this.getUserByExchangeId(exchangeUserId).catch((error) => {
@@ -153,7 +154,7 @@ class MobileService {
         attempt++
       }
 
-      console.info(`Calling portal to create a client api key`)
+      logger.info(`Calling portal to create a client api key`)
       const portalClient = await this.portalApi.getClientApiKey(
         username,
         isAccountAbstracted,
@@ -167,7 +168,7 @@ class MobileService {
         },
       })
 
-      console.info(`Successfully signed up ${exchangeUserId}`)
+      logger.info(`Successfully signed up ${exchangeUserId}`)
       res.status(200).json({
         exchangeUserId: user.exchangeUserId,
         clientApiKey: user.clientApiKey,
@@ -178,7 +179,7 @@ class MobileService {
         return
       }
 
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: error.message })
     }
   }
@@ -198,7 +199,7 @@ class MobileService {
       throw new Error('user already exists with user id, try again')
     }
 
-    console.info(`Calling wallet service to create wallet`)
+    logger.info(`Calling wallet service to create wallet`)
     const portalClient = await this.portalApi.getClientApiKey(
       username,
       isAccountAbstracted,
@@ -223,10 +224,10 @@ class MobileService {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const user = await this.getUserByExchangeId(exchangeUserId)
       const walletId = user.walletId
-      console.info(`Successfully sent walletId for ${user.exchangeUserId}`)
+      logger.info(`Successfully sent walletId for ${user.exchangeUserId}`)
       res.status(200).json({ walletId })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -266,14 +267,14 @@ class MobileService {
         },
       })
 
-      console.info(
+      logger.info(
         `Successfully stored client backup share for user ${exchangeUserId} with backupMethod ${backupMethod} and backupSharePairId ${backupSharePairId}`,
       )
       res
         .status(200)
         .json({ message: 'Successfully stored client backup share' })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -315,14 +316,14 @@ class MobileService {
       }
 
       // If no client backup share was found, return a 404.
-      console.error(
+      logger.error(
         `[getClientBackupShare] Could not find client backup share for user ${exchangeUserId} with backup method ${
           backupMethod as string
         }]`,
       )
       res.status(404).json({ message: 'Client backup share not found' })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -342,10 +343,10 @@ class MobileService {
         share: string | Record<string, any>
       }
       if (!clientId) {
-        console.error('[storeCustodianBackupShare] Did not receive clientId')
+        logger.error('[storeCustodianBackupShare] Did not receive clientId')
         throw new Error('[storeCustodianBackupShare] Did not receive clientId')
       }
-      console.info(`Storing backup share for client ${clientId}`)
+      logger.info(`Storing backup share for client ${clientId}`)
 
       // Ensure that backupSharePairId is a string or null, not undefined.
       backupSharePairId = backupSharePairId || null
@@ -353,9 +354,7 @@ class MobileService {
       // Obtain the custodian backup share from the request body.
       share = String(share)
       if (!share) {
-        console.error(
-          '[storeCustodianBackupShare] Did not receive backup share',
-        )
+        logger.error('[storeCustodianBackupShare] Did not receive backup share')
         throw new Error(
           '[storeCustodianBackupShare] Did not receive backup share',
         )
@@ -363,7 +362,7 @@ class MobileService {
 
       backupMethod = backupMethod || 'UNKNOWN'
       if (typeof backupMethod !== 'string') {
-        console.error(
+        logger.error(
           '[storeCustodianBackupShare] Did not receive backup method as a string',
         )
         throw new Error(
@@ -392,10 +391,10 @@ class MobileService {
         },
       })
 
-      console.info(`Successfully stored backup share for client ${clientId}`)
+      logger.info(`Successfully stored backup share for client ${clientId}`)
       res.status(200).json({ message: 'Successfully stored backup share' })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -438,14 +437,14 @@ class MobileService {
       }
 
       // If no custodian backup share was found, return a 404.
-      console.error(
+      logger.error(
         `[getCustodianBackupShare] Could not find custodian backup share for user ${exchangeUserId} with backup method ${
           backupMethod as string
         }]`,
       )
       res.status(404).json({ message: 'Custodian backup share not found' })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -457,7 +456,7 @@ class MobileService {
     try {
       const { clientId } = req.body as { clientId: string }
       if (!clientId) {
-        console.error('[getCustodianBackupShares] Did not receive clientId')
+        logger.error('[getCustodianBackupShares] Did not receive clientId')
         throw new Error('[getCustodianBackupShares] Did not receive clientId')
       }
 
@@ -469,12 +468,12 @@ class MobileService {
       )
 
       // Return the custodian backup shares for the user.
-      console.info(
+      logger.info(
         `Successfully responded with custodian backup shares for client ${clientId}`,
       )
       res.status(200).json({ backupShares })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -495,17 +494,17 @@ class MobileService {
       //   throw new Error(`User ${exchangeUserId} does not have an address.`)
       // }
 
-      console.log(
+      logger.info(
         `Transferring ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`,
       )
       const txHash = await this.transferExchangeFunds(address, amount, chainId)
 
-      console.info(
+      logger.info(
         `Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`,
       )
       res.status(200).json({ txHash })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -538,13 +537,13 @@ class MobileService {
         balance = parseFloat(updatedBalance)
       }
 
-      console.info(
+      logger.info(
         `Successfully sent balance of ${balance} for user ${exchangeUserId}`,
       )
 
       res.status(200).json({ balance })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -581,13 +580,13 @@ class MobileService {
         })
       }
 
-      console.info(
+      logger.info(
         `Successfully updated exchange balance of ${updatedBalance} for user ${exchangeUserId}`,
       )
 
       res.status(200).json({ balance: updatedBalance })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -601,11 +600,11 @@ class MobileService {
       const user = await this.getUserByExchangeId(exchangeUserId)
       const address = user.address
 
-      console.info(`Successfully sent address for user ${exchangeUserId}`)
+      logger.info(`Successfully sent address for user ${exchangeUserId}`)
 
       res.status(200).json({ address })
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -614,7 +613,7 @@ class MobileService {
    * Gets user by username
    */
   private async getUserByUsername(username: string): Promise<User> {
-    console.info(`Querying for user by username: ${username}`)
+    logger.info(`Querying for user by username: ${username}`)
 
     const user = await this.prisma.user.findUnique({
       where: { username },
@@ -631,7 +630,7 @@ class MobileService {
    * Gets user object based on exchangeUserId
    */
   private async getUserByExchangeId(exchangeUserId: number) {
-    console.info(`Querying for userId: ${exchangeUserId}`)
+    logger.info(`Querying for userId: ${exchangeUserId}`)
     const user = await this.prisma.user.findUnique({
       where: { exchangeUserId },
       include: {
@@ -651,7 +650,7 @@ class MobileService {
    * Gets user object based on clientApiKey
    */
   private async getUserByClientId(clientId: string) {
-    console.info(`Querying for userId: ${clientId}`)
+    logger.info(`Querying for userId: ${clientId}`)
     const user = await this.prisma.user.findUnique({
       where: { clientId },
       include: {
@@ -690,10 +689,13 @@ class MobileService {
     return this.exchangeService
       .sendTransaction(to, amount, chainId)
       .then((txHash) => {
-        console.info(`Transaction submitted, txHash: ${txHash}`)
+        logger.info(`Transaction submitted, txHash: ${txHash}`)
         return txHash
       })
-      .catch(console.error)
+      .catch((error) => {
+        logger.error(`Error sending transaction: ${error}`)
+        throw error
+      })
   }
 }
 

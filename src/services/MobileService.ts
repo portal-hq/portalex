@@ -216,6 +216,36 @@ class MobileService {
     return user
   }
 
+  async prepareEject(req: Request, res: Response): Promise<void> {
+    try {
+      const exchangeUserId = Number(req.params['exchangeUserId'])
+      const user = await this.getUserByExchangeId(exchangeUserId)
+
+      if (!user.clientApiKey) {
+        throw new Error('User does not have a client api key')
+      }
+
+      const walletId = req.body['walletId'] as string
+      if (!walletId) {
+        throw new MissingParameterError('walletId')
+      }
+
+      const prepareEjectResponse = await this.portalApi.prepareEject(user.clientId, walletId)
+
+      res.status(200).json({
+        ejectableUntil: prepareEjectResponse.data
+      })
+    } catch (error: any) {
+      if (error instanceof HttpError) {
+        res.status(error.HttpStatus).json({ message: error.message })
+        return
+      }
+
+      logger.error(error)
+      res.status(500).json({ message: error.message })
+    }
+  }
+
   /*
    * Sends the walletId for an exchangeUserId
    */

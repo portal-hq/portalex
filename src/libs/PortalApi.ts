@@ -85,7 +85,7 @@ class PortalApi {
 
     return axios
       .post(
-        `${PORTAL_API_URL}/api/v1/custodians/clients/${clientId}/prepare-eject`,
+        `${PORTAL_API_URL}/api/v1/custodians/me/clients/${clientId}/prepare-eject`,
         { walletId },
         {
           headers: headers,

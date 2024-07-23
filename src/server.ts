@@ -207,7 +207,9 @@ app.post(
   },
 )
 
-app.post('/mobile/:exchangeUserId/prepare-eject', mobileService.prepareEject)
+app.post('/mobile/:exchangeUserId/prepare-eject', async (req: Request, res: Response) => {
+  await mobileService.prepareEject(req, res)
+})
 
 app.get(
   '/portal/:exchangeUserId/authenticate',

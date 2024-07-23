@@ -233,7 +233,7 @@ class MobileService {
       const prepareEjectResponse = await this.portalApi.prepareEject(user.clientId, walletId)
 
       res.status(200).json({
-        ejectableUntil: prepareEjectResponse.data
+        ejectableUntil: prepareEjectResponse
       })
     } catch (error: any) {
       if (error instanceof HttpError) {

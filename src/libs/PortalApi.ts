@@ -78,13 +78,13 @@ class PortalApi {
       })
   }
 
-  async prepareEject(clientId: string, walletId: string) {
+  async prepareEject(clientId: string, walletId: string): Promise<string> {
     const headers = {
       Authorization: `Bearer ${this.apiKey}`,
     }
 
-    return axios
-      .post(
+    const response = await axios
+      .post<string>(
         `${PORTAL_API_URL}/api/v3/custodians/me/clients/${clientId}/prepare-eject`,
         { walletId },
         {
@@ -100,6 +100,10 @@ class PortalApi {
           message: `Portal API Error: ${errorData.error}`,
         }
       })
+
+    logger.info(`Prepare Eject Response: ${response.data}`)
+
+    return response.data as string
   }
 
   /**

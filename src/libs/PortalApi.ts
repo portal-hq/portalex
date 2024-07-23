@@ -78,6 +78,30 @@ class PortalApi {
       })
   }
 
+  async prepareEject(clientId: string, walletId: string) {
+    const headers = {
+      Authorization: `Bearer ${this.apiKey}`,
+    }
+
+    return axios
+      .post(
+        `${PORTAL_API_URL}/api/v1/custodians/clients/${clientId}/prepare-eject`,
+        { walletId },
+        {
+          headers: headers,
+        },
+      )
+      .catch((err: AxiosError) => {
+        const errorData = err.response?.data as {
+          error?: string
+        }
+        throw {
+          status: err.response?.status,
+          message: `Portal API Error: ${errorData.error}`,
+        }
+      })
+  }
+
   /**
    * Registers this custodian's webhook URL and secret with portal's connect api
    *

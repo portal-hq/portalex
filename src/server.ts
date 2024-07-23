@@ -207,6 +207,8 @@ app.post(
   },
 )
 
+app.post('/mobile/:exchangeUserId/prepare-eject', mobileService.prepareEject)
+
 app.get(
   '/portal/:exchangeUserId/authenticate',
   cors({

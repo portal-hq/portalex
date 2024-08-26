@@ -103,7 +103,7 @@ class PortalApi {
 
     logger.info(`Prepare Eject Response: ${response.data}`)
 
-    return response.data as string
+    return response.data
   }
 
   /**

@@ -81,8 +81,10 @@ class MobileService {
       }
 
       res.status(200).json({
-        exchangeUserId: user.exchangeUserId,
         clientApiKey: user.clientApiKey,
+        clientId: user.clientId,
+        exchangeUserId: user.exchangeUserId,
+        username: user.username,
       })
     } catch (error) {
       if (error instanceof HttpError) {
@@ -170,8 +172,10 @@ class MobileService {
 
       logger.info(`Successfully signed up ${exchangeUserId}`)
       res.status(200).json({
-        exchangeUserId: user.exchangeUserId,
         clientApiKey: user.clientApiKey,
+        clientId: user.clientId,
+        exchangeUserId: user.exchangeUserId,
+        username: user.username,
       })
     } catch (error: any) {
       if (error instanceof HttpError) {
@@ -230,7 +234,10 @@ class MobileService {
         throw new MissingParameterError('walletId')
       }
 
-      const prepareEjectResponse = await this.portalApi.prepareEject(user.clientId, walletId)
+      const prepareEjectResponse = await this.portalApi.prepareEject(
+        user.clientId,
+        walletId,
+      )
 
       res.status(200).send(prepareEjectResponse)
     } catch (error: any) {

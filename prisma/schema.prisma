@@ -7,8 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model AlertWebhookEvent {
+  createdAt DateTime @default(now())
+  event     Json
+  id        String   @id @default(cuid())
+  metadata  Json
+  type      String
+  updatedAt DateTime @updatedAt
+}
+
 model ClientBackupShare {
-  backupMethod      String  @default("UNKNOWN")
+  backupMethod      String   @default("UNKNOWN")
   backupSharePairId String?
   createdAt         DateTime @default(now())
   id                String   @id @default(cuid())
@@ -21,7 +30,7 @@ model ClientBackupShare {
 }
 
 model CustodianBackupShare {
-  backupMethod      String  @default("UNKNOWN")
+  backupMethod      String   @default("UNKNOWN")
   backupSharePairId String?
   createdAt         DateTime @default(now())
   id                String   @id @default(cuid())

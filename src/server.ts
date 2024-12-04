@@ -256,7 +256,7 @@ app.post(
 )
 
 app.post(
-  '/webhook/alert',
+  '/alerts/webhook/events',
   alertWebhookMiddleware,
   async (req: Request, res: Response) => {
     await mobileService.storeAlertWebhookEvent(req, res)

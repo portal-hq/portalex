@@ -732,6 +732,95 @@ class MobileService {
         throw error
       })
   }
+
+  /*
+   * Store an alert webhook event for a user
+   */
+  async storeAlertWebhookEvent(req: Request, res: Response): Promise<void> {
+    try {
+      const { data, metadata, type } = req.body as {
+        data: Record<string, any>[]
+        metadata: Record<string, any>
+        type: string
+      }
+
+      logger.info(`[storeAlertWebhookEvent] Received alert webhook event`, {
+        requestBody: req.body,
+      })
+
+      if (!data || !type) {
+        throw new MissingParameterError('data or type')
+      }
+
+      const alertWebhookEvent = await this.prisma.alertWebhookEvent.create({
+        data: {
+          event: data,
+          metadata,
+          type,
+        },
+      })
+
+      logger.info(
+        `[storeAlertWebhookEvent] Successfully stored alert webhook event`,
+        {
+          alertWebhookEventId: alertWebhookEvent.id,
+        },
+      )
+
+      res.status(200).send({ alertWebhookEvent })
+    } catch (error) {
+      logger.error(
+        `[storeAlertWebhookEvent] Error storing alert webhook event`,
+        {
+          error,
+        },
+      )
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  /*
+   * Get alert webhook event by id
+   */
+  async getAlertWebhookEvent(req: Request, res: Response): Promise<void> {
+    try {
+      const { alertWebhookEventId } = req.params
+
+      logger.info(
+        `[getAlertWebhookEvent] Received request for alert webhook event`,
+        {
+          alertWebhookEventId,
+        },
+      )
+
+      if (!alertWebhookEventId) {
+        throw new MissingParameterError('alertWebhookEventId')
+      }
+
+      const alertWebhookEvent = await this.prisma.alertWebhookEvent.findUnique({
+        where: {
+          id: alertWebhookEventId,
+        },
+      })
+
+      logger.info(
+        `[getAlertWebhookEvent] Successfully fetched alert webhook event`,
+        {
+          alertWebhookEvent,
+        },
+      )
+
+      res.status(200).json({ alertWebhookEvent })
+    } catch (error) {
+      logger.error(
+        `[getAlertWebhookEvent] Error fetching alert webhook event`,
+        {
+          error,
+        },
+      )
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
 }
 
 export default MobileService

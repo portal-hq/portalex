@@ -19,6 +19,9 @@ export const PORTAL_WEB_URL =
 
 export const ETH_NETWORK = process.env.ETH_NETWORK || 'sepolia'
 
+// Alert Webhook Setup
+export const ALERT_WEBHOOK_SECRET = process.env.ALERT_WEBHOOK_SECRET || 'secret'
+
 // Used for demo script to register a webhook
 export const WEBHOOK_URL = process.env.WEBHOOK_URL || '' // need to set the host with /webhook at the end
 export const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'secret'

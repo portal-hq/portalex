@@ -17,7 +17,7 @@ import {
   MAGIC_LINK_FROM_EMAIL,
   MAGIC_LINK_FROM_NAME,
 } from './config'
-import { authMiddleware } from './libs/auth'
+import { alertWebhookMiddleware, authMiddleware } from './libs/auth'
 import { logger } from './libs/logger'
 import SendGridService from './libs/sendgrid'
 import HotWalletService from './services/HotWalletService'
@@ -65,7 +65,7 @@ app.post('/mobile/login', async (req: Request, res: Response) => {
 })
 
 app.post('/magic/new', async (req, res) => {
-  const { email } = req.body
+  const { email } = req.body as { email: string }
   const code = randomUUID()
 
   await prisma.magicCode.create({
@@ -207,9 +207,12 @@ app.post(
   },
 )
 
-app.post('/mobile/:exchangeUserId/prepare-eject', async (req: Request, res: Response) => {
-  await mobileService.prepareEject(req, res)
-})
+app.post(
+  '/mobile/:exchangeUserId/prepare-eject',
+  async (req: Request, res: Response) => {
+    await mobileService.prepareEject(req, res)
+  },
+)
 
 app.get(
   '/portal/:exchangeUserId/authenticate',
@@ -249,6 +252,22 @@ app.post(
   async (req: Request, res: Response) => {
     logger.info('Requested by IP address:', req.ip, req.headers)
     await mobileService.storeCustodianBackupShare(req, res)
+  },
+)
+
+app.post(
+  '/webhook/alert',
+  alertWebhookMiddleware,
+  async (req: Request, res: Response) => {
+    await mobileService.storeAlertWebhookEvent(req, res)
+  },
+)
+
+app.get(
+  '/alerts/webhook/events/:alertWebhookEventId',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    await mobileService.getAlertWebhookEvent(req, res)
   },
 )
 

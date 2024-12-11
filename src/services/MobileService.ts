@@ -847,8 +847,8 @@ class MobileService {
 
       const whereClause: any = {
         event: {
-          path: ['$[*].metadata.triggeredBy'],
-          array_contains: address,
+          path: '$[*].metadata.triggeredBy',
+          array_contains: address.toLowerCase(),
         },
       }
 

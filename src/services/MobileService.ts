@@ -1,6 +1,7 @@
 import { PrismaClient, User } from '@prisma/client'
 import { isAddress } from 'ethers/lib/utils'
 import { Request, Response } from 'express'
+import { isValidISO8601 } from 'libs/utils'
 
 import { CUSTODIAN_API_KEY } from '../config'
 import PortalApi from '../libs/PortalApi'
@@ -849,7 +850,15 @@ class MobileService {
 
       // Validate limit is a reasonable number
       if (isNaN(limit) || limit < 1 || limit > 1000) {
-        res.status(400).json({ message: 'Limit must be between 1 and 1000' })
+        res.status(400).json({ message: '"limit" must be between 1 and 1000' })
+        return
+      }
+
+      // Validate since is a valid ISO timestamp
+      if (since && !isValidISO8601(since)) {
+        res.status(400).json({
+          message: 'Invalid ISO timestamp format for "since" parameter',
+        })
         return
       }
 
@@ -866,17 +875,8 @@ class MobileService {
       }
 
       if (since) {
-        whereClause.event = {
-          array_contains: [
-            {
-              metadata: {
-                triggeredBy: address.toLowerCase(),
-                sentAt: {
-                  gte: since,
-                },
-              },
-            },
-          ],
+        whereClause.createdAt = {
+          gte: since,
         }
       }
 

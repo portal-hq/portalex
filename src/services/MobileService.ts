@@ -831,7 +831,7 @@ class MobileService {
   ): Promise<void> {
     try {
       const { address } = req.params
-      const since = req.query.since as string // ISO timestamp string
+      const since = req.query.since as string
 
       logger.info(
         `[getAlertWebhookEventsByAddress] Received request for alert webhook events`,
@@ -847,19 +847,27 @@ class MobileService {
 
       const whereClause: any = {
         event: {
-          path: '$[*].metadata.triggeredBy',
-          array_contains: address.toLowerCase(),
+          array_contains: [
+            {
+              metadata: {
+                triggeredBy: address.toLowerCase(),
+              },
+            },
+          ],
         },
       }
 
       // Add since filter if provided
       if (since) {
         whereClause.event = {
-          AND: [
-            whereClause.event,
+          array_contains: [
             {
-              path: ['$[*].metadata.sentAt'],
-              array_contains: (element: string) => element >= since,
+              metadata: {
+                triggeredBy: address.toLowerCase(),
+                sentAt: {
+                  gte: since,
+                },
+              },
             },
           ],
         }

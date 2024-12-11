@@ -832,17 +832,25 @@ class MobileService {
     try {
       const { address } = req.params
       const since = req.query.since as string
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 100 // Default to 100 if not specified
 
       logger.info(
         `[getAlertWebhookEventsByAddress] Received request for alert webhook events`,
         {
           address,
           since,
+          limit,
         },
       )
 
       if (!address) {
         throw new MissingParameterError('address')
+      }
+
+      // Validate limit is a reasonable number
+      if (isNaN(limit) || limit < 1 || limit > 1000) {
+        res.status(400).json({ message: 'Limit must be between 1 and 1000' })
+        return
       }
 
       const whereClause: any = {
@@ -857,7 +865,6 @@ class MobileService {
         },
       }
 
-      // Add since filter if provided
       if (since) {
         whereClause.event = {
           array_contains: [
@@ -882,6 +889,7 @@ class MobileService {
         orderBy: {
           createdAt: 'desc',
         },
+        take: limit,
       })
 
       logger.info(
@@ -889,6 +897,7 @@ class MobileService {
         {
           count: alertWebhookEvents.length,
           since,
+          limit,
         },
       )
 

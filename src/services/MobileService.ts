@@ -865,6 +865,10 @@ class MobileService {
         }
       }
 
+      logger.info(`[getAlertWebhookEventsByAddress] Where clause`, {
+        whereClause,
+      })
+
       const alertWebhookEvents = await this.prisma.alertWebhookEvent.findMany({
         where: whereClause,
         orderBy: {

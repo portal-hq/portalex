@@ -1,7 +1,6 @@
 import { PrismaClient, User } from '@prisma/client'
 import { isAddress } from 'ethers/lib/utils'
 import { Request, Response } from 'express'
-import { isValidISO8601 } from 'libs/utils'
 
 import { CUSTODIAN_API_KEY } from '../config'
 import PortalApi from '../libs/PortalApi'
@@ -11,6 +10,7 @@ import {
   MissingParameterError,
 } from '../libs/errors'
 import { logger } from '../libs/logger'
+import { isValidISO8601 } from '../libs/utils'
 
 interface ExchangeService {
   getBalance: (chainId: number) => Promise<string>

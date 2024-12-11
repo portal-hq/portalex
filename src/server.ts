@@ -271,6 +271,14 @@ app.get(
   },
 )
 
+app.get(
+  '/alerts/webhook/events/triggered-by/:address',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    await mobileService.getAlertWebhookEventsByAddress(req, res)
+  },
+)
+
 app.listen(port, () =>
   logger.info(`PortalEx Server listening on port ${port}!`),
 )

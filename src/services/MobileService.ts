@@ -821,6 +821,76 @@ class MobileService {
       res.status(500).json({ message: 'Internal server error' })
     }
   }
+
+  /*
+   * Get alert webhook events triggered by an address
+   */
+  async getAlertWebhookEventsByAddress(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const { address } = req.params
+      const since = req.query.since as string // ISO timestamp string
+
+      logger.info(
+        `[getAlertWebhookEventsByAddress] Received request for alert webhook events`,
+        {
+          address,
+          since,
+        },
+      )
+
+      if (!address) {
+        throw new MissingParameterError('address')
+      }
+
+      const whereClause: any = {
+        event: {
+          path: ['$[*].metadata.triggeredBy'],
+          array_contains: address,
+        },
+      }
+
+      // Add since filter if provided
+      if (since) {
+        whereClause.event = {
+          AND: [
+            whereClause.event,
+            {
+              path: ['$[*].metadata.sentAt'],
+              array_contains: (element: string) => element >= since,
+            },
+          ],
+        }
+      }
+
+      const alertWebhookEvents = await this.prisma.alertWebhookEvent.findMany({
+        where: whereClause,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+
+      logger.info(
+        `[getAlertWebhookEventsByAddress] Successfully fetched alert webhook events`,
+        {
+          count: alertWebhookEvents.length,
+          since,
+        },
+      )
+
+      res.status(200).json({ alertWebhookEvents })
+    } catch (error) {
+      logger.error(
+        `[getAlertWebhookEventsByAddress] Error fetching alert webhook events`,
+        {
+          error,
+        },
+      )
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
 }
 
 export default MobileService

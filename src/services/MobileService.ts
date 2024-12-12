@@ -547,10 +547,12 @@ class MobileService {
   }
 
   /*
-   * Transfers an amount of eth from the exchange to the users wallet.
+   * Transfers an amount of test ETH from the exchange to the users wallet.
    */
   async fundAddressByChainId(req: Request, res: Response): Promise<void> {
     try {
+      const SUPPORTED_CHAIN_IDS = ['eip155:11155111']
+
       const { chainId, address } = req.params
       const { amount } = req.body as { amount: number }
 
@@ -562,10 +564,9 @@ class MobileService {
         return
       }
 
-      // Extract the chain reference id from the chainId (eip155:1 => 1)
-      const chainReferenceId = Number(chainId.split(':')[1])
-      if (isNaN(chainReferenceId)) {
-        res.status(400).json({ error: `Invalid chainId: ${chainId}` })
+      // Validate that the chainId is supported
+      if (!SUPPORTED_CHAIN_IDS.includes(chainId)) {
+        res.status(400).json({ error: `Unsupported chainId: ${chainId}` })
         return
       }
 
@@ -580,6 +581,13 @@ class MobileService {
         res.status(400).json({
           error: `Invalid amount: ${amount}, must be between 0 and 0.05`,
         })
+        return
+      }
+
+      // Derive the chain reference id from the chainId
+      const chainReferenceId = Number(chainId.split(':')[1])
+      if (isNaN(chainReferenceId)) {
+        res.status(400).json({ error: `Invalid chainId: ${chainId}` })
         return
       }
 

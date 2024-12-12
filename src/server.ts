@@ -272,7 +272,6 @@ app.post(
 
 app.get(
   '/alerts/webhook/events/:alertWebhookEventId',
-  authMiddleware,
   async (req: Request, res: Response) => {
     await mobileService.getAlertWebhookEvent(req, res)
   },
@@ -280,7 +279,6 @@ app.get(
 
 app.get(
   '/alerts/webhook/events/triggered-by/:address',
-  authMiddleware,
   async (req: Request, res: Response) => {
     await mobileService.getAlertWebhookEventsByAddress(req, res)
   },

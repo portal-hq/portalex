@@ -182,7 +182,7 @@ app.post(
 app.post(
   '/mobile/:exchangeUserId/transfer',
   async (req: Request, res: Response) => {
-    await mobileService.transferFunds(req, res)
+    await mobileService.transferFundsByExchangeUserId(req, res)
   },
 )
 
@@ -236,6 +236,13 @@ app.get('/portal/:exchangeUserId/otp', async (req: Request, res: Response) => {
     otp: webOtp,
   })
 })
+
+app.post(
+  '/chains/:chainId/addresses/:address/fund',
+  async (req: Request, res: Response) => {
+    await mobileService.fundAddressByChainId(req, res)
+  },
+)
 
 app.post(
   '/webhook/backup/fetch',

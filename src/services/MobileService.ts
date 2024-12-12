@@ -517,7 +517,10 @@ class MobileService {
   /*
    * Transfers an amount of eth from the exchange to the users wallet.
    */
-  async transferFunds(req: Request, res: Response): Promise<void> {
+  async transferFundsByExchangeUserId(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const amount = Number(req.body['amount'])
@@ -526,21 +529,79 @@ class MobileService {
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
-      // if (!user.address) {
-      //   throw new Error(`User ${exchangeUserId} does not have an address.`)
-      // }
-
       logger.info(
-        `Transferring ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`,
+        `[transferFundsByExchangeUserId] Transferring ${amount} ETH (Chain ID: ${chainId}) to ${address} (exchangeUserId: ${user.exchangeUserId})`,
       )
       const txHash = await this.transferExchangeFunds(address, amount, chainId)
 
       logger.info(
-        `Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`,
+        `[transferFundsByExchangeUserId] Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) to ${address} (exchangeUserId: ${user.exchangeUserId})`,
       )
       res.status(200).json({ txHash })
     } catch (error) {
-      logger.error(error)
+      logger.error(`[transferFundsByExchangeUserId] Error: ${error}`, {
+        error,
+      })
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  /*
+   * Transfers an amount of eth from the exchange to the users wallet.
+   */
+  async fundAddressByChainId(req: Request, res: Response): Promise<void> {
+    try {
+      const { chainId, address } = req.params
+      const { amount } = req.body as { amount: number }
+
+      // Validate that the request body contains the required parameters
+      if (!chainId || !address || !amount) {
+        res.status(400).json({
+          error: `Missing parameters: chainId: ${chainId}, address: ${address}, amount: ${amount}`,
+        })
+        return
+      }
+
+      // Extract the chain reference id from the chainId (eip155:1 => 1)
+      const chainReferenceId = Number(chainId.split(':')[1])
+      if (isNaN(chainReferenceId)) {
+        res.status(400).json({ error: `Invalid chainId: ${chainId}` })
+        return
+      }
+
+      // Validate that the address is a valid ethereum address
+      if (!isAddress(address)) {
+        res.status(400).json({ error: `Invalid eip155 address: ${address}` })
+        return
+      }
+
+      // Validate that the amount is between 0 and 0.05 (but greater than 0)
+      if (amount <= 0 || amount > 0.05) {
+        res.status(400).json({
+          error: `Invalid amount: ${amount}, must be between 0 and 0.05`,
+        })
+        return
+      }
+
+      logger.info(
+        `[fundAddressByChainId] Funding ${amount} ETH (Chain ID: ${chainId}) to ${address}`,
+      )
+
+      // Transfer the funds to the address
+      const txHash = await this.transferExchangeFunds(
+        address,
+        amount,
+        chainReferenceId,
+      )
+
+      logger.info(
+        `[fundAddressByChainId] Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) to ${address}`,
+      )
+      res.status(200).json({ txHash })
+    } catch (error) {
+      logger.error(`[fundAddressByChainId] Error: ${error}`, {
+        error,
+      })
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -666,7 +727,9 @@ class MobileService {
    * Gets user object based on exchangeUserId
    */
   private async getUserByExchangeId(exchangeUserId: number) {
-    logger.info(`Querying for userId: ${exchangeUserId}`)
+    logger.info(
+      `[getUserByExchangeId] Querying for user by exchangeUserId: ${exchangeUserId}`,
+    )
     const user = await this.prisma.user.findUnique({
       where: { exchangeUserId },
       include: {
@@ -686,7 +749,9 @@ class MobileService {
    * Gets user object based on clientApiKey
    */
   private async getUserByClientId(clientId: string) {
-    logger.info(`Querying for userId: ${clientId}`)
+    logger.info(
+      `[getUserByClientId] Querying for user by clientId: ${clientId}`,
+    )
     const user = await this.prisma.user.findUnique({
       where: { clientId },
       include: {
@@ -854,7 +919,7 @@ class MobileService {
         return
       }
 
-      // Validate since is a valid ISO timestamp
+      // Validate "since" is a valid ISO timestamp
       if (since && !isValidISO8601(since)) {
         res.status(400).json({
           message: 'Invalid ISO timestamp format for "since" parameter',

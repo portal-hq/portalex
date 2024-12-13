@@ -10,6 +10,7 @@ import {
   MissingParameterError,
 } from '../libs/errors'
 import { logger } from '../libs/logger'
+import { isValidISO8601 } from '../libs/utils'
 
 interface ExchangeService {
   getBalance: (chainId: number) => Promise<string>
@@ -516,7 +517,10 @@ class MobileService {
   /*
    * Transfers an amount of eth from the exchange to the users wallet.
    */
-  async transferFunds(req: Request, res: Response): Promise<void> {
+  async transferFundsByExchangeUserId(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
     try {
       const exchangeUserId = Number(req.params['exchangeUserId'])
       const amount = Number(req.body['amount'])
@@ -525,21 +529,87 @@ class MobileService {
 
       const user = await this.getUserByExchangeId(exchangeUserId)
 
-      // if (!user.address) {
-      //   throw new Error(`User ${exchangeUserId} does not have an address.`)
-      // }
-
       logger.info(
-        `Transferring ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`,
+        `[transferFundsByExchangeUserId] Transferring ${amount} ETH (Chain ID: ${chainId}) to ${address} (exchangeUserId: ${user.exchangeUserId})`,
       )
       const txHash = await this.transferExchangeFunds(address, amount, chainId)
 
       logger.info(
-        `Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) into ${address} (user: ${user.exchangeUserId})`,
+        `[transferFundsByExchangeUserId] Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) to ${address} (exchangeUserId: ${user.exchangeUserId})`,
       )
       res.status(200).json({ txHash })
     } catch (error) {
-      logger.error(error)
+      logger.error(`[transferFundsByExchangeUserId] Error: ${error}`, {
+        error,
+      })
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  /*
+   * Transfers an amount of test ETH from the exchange to the users wallet.
+   */
+  async fundAddressByChainId(req: Request, res: Response): Promise<void> {
+    try {
+      const SUPPORTED_CHAIN_IDS = ['eip155:11155111']
+
+      const { chainId, address } = req.params
+      const { amount } = req.body as { amount: number }
+
+      // Validate that the request body contains the required parameters
+      if (!chainId || !address || !amount) {
+        res.status(400).json({
+          error: `Missing parameters: chainId: ${chainId}, address: ${address}, amount: ${amount}`,
+        })
+        return
+      }
+
+      // Validate that the chainId is supported
+      if (!SUPPORTED_CHAIN_IDS.includes(chainId)) {
+        res.status(400).json({ error: `Unsupported chainId: ${chainId}` })
+        return
+      }
+
+      // Validate that the address is a valid ethereum address
+      if (!isAddress(address)) {
+        res.status(400).json({ error: `Invalid eip155 address: ${address}` })
+        return
+      }
+
+      // Validate that the amount is between 0 and 0.05 (but greater than 0)
+      if (amount <= 0 || amount > 0.05) {
+        res.status(400).json({
+          error: `Invalid amount: ${amount}, must be between 0 and 0.05`,
+        })
+        return
+      }
+
+      // Derive the chain reference id from the chainId
+      const chainReferenceId = Number(chainId.split(':')[1])
+      if (isNaN(chainReferenceId)) {
+        res.status(400).json({ error: `Invalid chainId: ${chainId}` })
+        return
+      }
+
+      logger.info(
+        `[fundAddressByChainId] Funding ${amount} ETH (Chain ID: ${chainId}) to ${address}`,
+      )
+
+      // Transfer the funds to the address
+      const txHash = await this.transferExchangeFunds(
+        address,
+        amount,
+        chainReferenceId,
+      )
+
+      logger.info(
+        `[fundAddressByChainId] Successfully submitted transfer for ${amount} ETH (Chain ID: ${chainId}) to ${address}`,
+      )
+      res.status(200).json({ txHash })
+    } catch (error) {
+      logger.error(`[fundAddressByChainId] Error: ${error}`, {
+        error,
+      })
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -665,7 +735,9 @@ class MobileService {
    * Gets user object based on exchangeUserId
    */
   private async getUserByExchangeId(exchangeUserId: number) {
-    logger.info(`Querying for userId: ${exchangeUserId}`)
+    logger.info(
+      `[getUserByExchangeId] Querying for user by exchangeUserId: ${exchangeUserId}`,
+    )
     const user = await this.prisma.user.findUnique({
       where: { exchangeUserId },
       include: {
@@ -685,7 +757,9 @@ class MobileService {
    * Gets user object based on clientApiKey
    */
   private async getUserByClientId(clientId: string) {
-    logger.info(`Querying for userId: ${clientId}`)
+    logger.info(
+      `[getUserByClientId] Querying for user by clientId: ${clientId}`,
+    )
     const user = await this.prisma.user.findUnique({
       where: { clientId },
       include: {
@@ -814,6 +888,96 @@ class MobileService {
     } catch (error) {
       logger.error(
         `[getAlertWebhookEvent] Error fetching alert webhook event`,
+        {
+          error,
+        },
+      )
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  /*
+   * Get alert webhook events triggered by an address
+   */
+  async getAlertWebhookEventsByAddress(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const { address } = req.params
+      const since = req.query.since as string
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 100 // Default to 100 if not specified
+
+      logger.info(
+        `[getAlertWebhookEventsByAddress] Received request for alert webhook events`,
+        {
+          address,
+          since,
+          limit,
+        },
+      )
+
+      if (!address) {
+        throw new MissingParameterError('address')
+      }
+
+      // Validate limit is a reasonable number
+      if (isNaN(limit) || limit < 1 || limit > 1000) {
+        res.status(400).json({ message: '"limit" must be between 1 and 1000' })
+        return
+      }
+
+      // Validate "since" is a valid ISO timestamp
+      if (since && !isValidISO8601(since)) {
+        res.status(400).json({
+          message: 'Invalid ISO timestamp format for "since" parameter',
+        })
+        return
+      }
+
+      const whereClause: any = {
+        event: {
+          array_contains: [
+            {
+              metadata: {
+                triggeredBy: address.toLowerCase(),
+              },
+            },
+          ],
+        },
+      }
+
+      if (since) {
+        whereClause.createdAt = {
+          gte: since,
+        }
+      }
+
+      logger.info(`[getAlertWebhookEventsByAddress] Where clause`, {
+        whereClause,
+      })
+
+      const alertWebhookEvents = await this.prisma.alertWebhookEvent.findMany({
+        where: whereClause,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+      })
+
+      logger.info(
+        `[getAlertWebhookEventsByAddress] Successfully fetched alert webhook events`,
+        {
+          count: alertWebhookEvents.length,
+          since,
+          limit,
+        },
+      )
+
+      res.status(200).json({ alertWebhookEvents })
+    } catch (error) {
+      logger.error(
+        `[getAlertWebhookEventsByAddress] Error fetching alert webhook events`,
         {
           error,
         },

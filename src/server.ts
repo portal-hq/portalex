@@ -182,7 +182,7 @@ app.post(
 app.post(
   '/mobile/:exchangeUserId/transfer',
   async (req: Request, res: Response) => {
-    await mobileService.transferFunds(req, res)
+    await mobileService.transferFundsByExchangeUserId(req, res)
   },
 )
 
@@ -238,6 +238,13 @@ app.get('/portal/:exchangeUserId/otp', async (req: Request, res: Response) => {
 })
 
 app.post(
+  '/chains/:chainId/addresses/:address/fund',
+  async (req: Request, res: Response) => {
+    await mobileService.fundAddressByChainId(req, res)
+  },
+)
+
+app.post(
   '/webhook/backup/fetch',
   authMiddleware,
   async (req: Request, res: Response) => {
@@ -265,9 +272,15 @@ app.post(
 
 app.get(
   '/alerts/webhook/events/:alertWebhookEventId',
-  authMiddleware,
   async (req: Request, res: Response) => {
     await mobileService.getAlertWebhookEvent(req, res)
+  },
+)
+
+app.get(
+  '/alerts/webhook/events/triggered-by/:address',
+  async (req: Request, res: Response) => {
+    await mobileService.getAlertWebhookEventsByAddress(req, res)
   },
 )
 

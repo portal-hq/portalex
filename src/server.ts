@@ -270,6 +270,13 @@ app.post(
   },
 )
 
+app.post(
+  '/alerts/webhook/events/simulate-failure',
+  (req: Request, res: Response) => {
+    mobileService.simulateAlertWebhookEventFailure(req, res)
+  },
+)
+
 app.get(
   '/alerts/webhook/events/:alertWebhookEventId',
   async (req: Request, res: Response) => {

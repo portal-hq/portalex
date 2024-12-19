@@ -854,6 +854,19 @@ class MobileService {
   }
 
   /*
+   * Simulate a failure of an alert webhook event
+   */
+  simulateAlertWebhookEventFailure(req: Request, res: Response): void {
+    logger.info(
+      `[simulateAlertWebhookEventFailure] Simulating alert webhook event failure`,
+      {
+        requestBody: req.body,
+      },
+    )
+    res.status(400).json({ message: 'Simulated alert webhook event failure' })
+  }
+
+  /*
    * Get alert webhook event by id
    */
   async getAlertWebhookEvent(req: Request, res: Response): Promise<void> {

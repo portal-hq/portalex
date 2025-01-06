@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client'
 import { ethers, utils, Wallet } from 'ethers'
 import { isAddress } from 'ethers/lib/utils'
 
@@ -6,11 +5,7 @@ import { logger } from '../libs/logger'
 import { chainToName } from '../libs/utils'
 
 class HotWalletService {
-  constructor(
-    private prisma: PrismaClient,
-    public address: string,
-    private privateKey: string,
-  ) {}
+  constructor(public address: string, private privateKey: string) {}
   /*
    * returns (String) Users account balance of Ether in USD.
    */
@@ -69,7 +64,6 @@ class HotWalletService {
       from,
       to,
       value: ethers.utils.parseEther(String(amount)),
-      nonce: await provider.getTransactionCount(from, 'latest'),
       gasLimit: ethers.utils.hexlify(100000),
       gasPrice,
     }

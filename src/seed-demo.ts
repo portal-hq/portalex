@@ -19,7 +19,7 @@ async function seedDemo() {
 
   const prisma = new PrismaClient()
 
-  const hotWalletService = new HotWalletService(prisma, '', '')
+  const hotWalletService = new HotWalletService('', '')
   const mobileService = new MobileService(prisma, hotWalletService)
   const portalApi = new PortalApi(CUSTODIAN_API_KEY)
 

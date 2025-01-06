@@ -38,7 +38,6 @@ logger.info(
 )
 
 const exchangeService = new HotWalletService(
-  prisma,
   exchangePublicKey,
   exchangePrivateKey,
 )

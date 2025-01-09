@@ -1,8 +1,8 @@
 import { Alchemy, Network } from 'alchemy-sdk'
-import { ALCHEMY_API_KEY } from 'config'
 import { ethers, utils, Wallet } from 'ethers'
 import { isAddress } from 'ethers/lib/utils'
 
+import { ALCHEMY_API_KEY } from '../config'
 import { logger } from '../libs/logger'
 
 class HotWalletService {

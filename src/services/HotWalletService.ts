@@ -1,8 +1,9 @@
+import { Alchemy, Network } from 'alchemy-sdk'
+import { ALCHEMY_API_KEY } from 'config'
 import { ethers, utils, Wallet } from 'ethers'
 import { isAddress } from 'ethers/lib/utils'
 
 import { logger } from '../libs/logger'
-import { chainToName } from '../libs/utils'
 
 class HotWalletService {
   constructor(public address: string, private privateKey: string) {}
@@ -10,10 +11,18 @@ class HotWalletService {
    * returns (String) Users account balance of Ether in USD.
    */
   async getBalance(chainId: number) {
-    const network = chainToName(chainId)
-    const provider = ethers.getDefaultProvider(network)
+    // Get the provider
+    const alchemy = new Alchemy({
+      apiKey: ALCHEMY_API_KEY,
+      network: this.getAlchemyNetwork(chainId),
+    })
+    const provider = await alchemy.config.getProvider()
+
+    // Get the balance
     const wallet = new Wallet(this.privateKey, provider)
     const bigNumberBalance = await wallet.getBalance()
+
+    // Format the balance
     const balance = ethers.utils.formatEther(bigNumberBalance)
     return balance
   }
@@ -26,19 +35,25 @@ class HotWalletService {
     let from = this.address
     const privateKey = this.privateKey
 
+    // Check if the private key is configured
     if (!this.privateKey) {
       throw new Error(
         'No exchange private key configured. Cannot transfer funds.',
       )
     }
 
+    // Check if the addresses are valid
     if (!isAddress(from) || !isAddress(to)) {
       const notAddress = !isAddress(from) ? from : to
       throw new Error(`Address "${notAddress} is not a valid ethereum address.`)
     }
 
-    const network = chainToName(chainId)
-    const provider = ethers.getDefaultProvider(network)
+    // Get the provider
+    const alchemy = new Alchemy({
+      apiKey: ALCHEMY_API_KEY,
+      network: this.getAlchemyNetwork(chainId),
+    })
+    const provider = await alchemy.config.getProvider()
 
     // if its negative, we want to transfer from the web3 wallet to the exchange
     if (amount < 0) {
@@ -58,8 +73,10 @@ class HotWalletService {
       )
     }
 
-    const wallet = new Wallet(privateKey, provider)
+    // Get the gas price
     const gasPrice = await provider.getGasPrice()
+
+    // Create the transaction
     const tx = {
       from,
       to,
@@ -68,6 +85,8 @@ class HotWalletService {
       gasPrice,
     }
 
+    // Send it
+    const wallet = new Wallet(privateKey, provider)
     return await wallet
       .sendTransaction(tx)
       .then((res) => {
@@ -78,6 +97,17 @@ class HotWalletService {
         logger.error(`Error sending transaction: ${error}`)
         throw error
       })
+  }
+
+  private getAlchemyNetwork(chainId: number): Network {
+    switch (chainId) {
+      case 1:
+        return Network.ETH_MAINNET
+      case 11155111:
+        return Network.ETH_SEPOLIA
+      default:
+        throw new Error(`Chain ID ${chainId} not supported by Alchemy`)
+    }
   }
 }
 export default HotWalletService

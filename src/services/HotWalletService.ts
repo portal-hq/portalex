@@ -75,26 +75,31 @@ class HotWalletService {
 
     // Get fee data with premium
     const feeData = await provider.getFeeData()
-    const PREMIUM = 200 // 100% premium to force transactions through
-    const MIN_GWEI = 25 // Minimum gas price in gwei
+    const PREMIUM = 200 // 100% premium
+    const MIN_BASE_FEE = 25 // Minimum base fee in gwei
+    const MIN_PRIORITY_FEE = 10 // Minimum priority fee in gwei
 
-    // Convert MIN_GWEI to wei
-    const minGasPrice = ethers.utils.parseUnits(MIN_GWEI.toString(), 'gwei')
+    // Convert to wei
+    const minBaseFee = ethers.utils.parseUnits(MIN_BASE_FEE.toString(), 'gwei')
+    const minPriorityFee = ethers.utils.parseUnits(
+      MIN_PRIORITY_FEE.toString(),
+      'gwei',
+    )
 
-    // Calculate gas prices with premium and floor
+    // Calculate gas prices with premium and floors
     const maxFeePerGas = feeData.maxFeePerGas
       ?.mul(PREMIUM)
       .div(100)
-      .gt(minGasPrice)
+      .gt(minBaseFee)
       ? feeData.maxFeePerGas?.mul(PREMIUM).div(100)
-      : minGasPrice
+      : minBaseFee
 
     const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
       ?.mul(PREMIUM)
       .div(100)
-      .gt(minGasPrice)
+      .gt(minPriorityFee)
       ? feeData.maxPriorityFeePerGas?.mul(PREMIUM).div(100)
-      : minGasPrice
+      : minPriorityFee
 
     // Log the gas prices we're using
     logger.info(

@@ -127,6 +127,7 @@ class HotWalletService {
       value: ethers.utils.parseEther(String(amount)),
       maxFeePerGas,
       maxPriorityFeePerGas,
+      nonce: await provider.getTransactionCount(from, 'latest'),
     }
 
     // Send it

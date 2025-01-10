@@ -55,3 +55,8 @@ export const MAGIC_LINK_FROM_EMAIL =
   process.env.MAGIC_LINK_FROM_EMAIL || 'david@portalhq.io'
 export const MAGIC_LINK_FROM_NAME =
   process.env.MAGIC_LINK_FROM_NAME || 'Portal Demo (David)'
+
+// ==============================
+// Alchemy Configuration
+// ==============================
+export const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY || ''

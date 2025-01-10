@@ -73,11 +73,17 @@ class HotWalletService {
       )
     }
 
-    // Create the transaction with updated gas settings
+    // Get fee data with premium
+    const feeData = await provider.getFeeData()
+    const PREMIUM = 150 // 50% premium to force transactions through
+
+    // Create transaction with premium on gas
     const tx = {
       from,
       to,
       value: ethers.utils.parseEther(String(amount)),
+      maxFeePerGas: feeData.maxFeePerGas?.mul(PREMIUM).div(100),
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.mul(PREMIUM).div(100),
     }
 
     // Send it

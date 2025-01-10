@@ -73,17 +73,11 @@ class HotWalletService {
       )
     }
 
-    // Get the gas price with a small premium to avoid being outbid
-    const gasPrice = await provider.getGasPrice()
-    const gasPriceWithPremium = gasPrice.mul(120).div(100) // 20% premium
-
     // Create the transaction with updated gas settings
     const tx = {
       from,
       to,
       value: ethers.utils.parseEther(String(amount)),
-      gasLimit: ethers.utils.hexlify(100000),
-      gasPrice: gasPriceWithPremium,
     }
 
     // Send it

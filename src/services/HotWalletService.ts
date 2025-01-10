@@ -75,15 +75,53 @@ class HotWalletService {
 
     // Get fee data with premium
     const feeData = await provider.getFeeData()
-    const PREMIUM = 150 // 50% premium to force transactions through
+    const PREMIUM = 200 // 100% premium to force transactions through
+    const MIN_GWEI = 25 // Minimum gas price in gwei
 
-    // Create transaction with premium on gas
+    // Convert MIN_GWEI to wei
+    const minGasPrice = ethers.utils.parseUnits(MIN_GWEI.toString(), 'gwei')
+
+    // Calculate gas prices with premium and floor
+    const maxFeePerGas = feeData.maxFeePerGas
+      ?.mul(PREMIUM)
+      .div(100)
+      .gt(minGasPrice)
+      ? feeData.maxFeePerGas?.mul(PREMIUM).div(100)
+      : minGasPrice
+
+    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
+      ?.mul(PREMIUM)
+      .div(100)
+      .gt(minGasPrice)
+      ? feeData.maxPriorityFeePerGas?.mul(PREMIUM).div(100)
+      : minGasPrice
+
+    // Log the gas prices we're using
+    logger.info(
+      `Base maxFeePerGas: ${ethers.utils.formatUnits(
+        feeData.maxFeePerGas || 0,
+        'gwei',
+      )} gwei`,
+    )
+    logger.info(
+      `Using maxFeePerGas: ${ethers.utils.formatUnits(
+        maxFeePerGas || 0,
+        'gwei',
+      )} gwei`,
+    )
+    logger.info(
+      `Using maxPriorityFeePerGas: ${ethers.utils.formatUnits(
+        maxPriorityFeePerGas || 0,
+        'gwei',
+      )} gwei`,
+    )
+
     const tx = {
       from,
       to,
       value: ethers.utils.parseEther(String(amount)),
-      maxFeePerGas: feeData.maxFeePerGas?.mul(PREMIUM).div(100),
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.mul(PREMIUM).div(100),
+      maxFeePerGas,
+      maxPriorityFeePerGas,
     }
 
     // Send it

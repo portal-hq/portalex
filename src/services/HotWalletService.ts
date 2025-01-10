@@ -101,25 +101,9 @@ class HotWalletService {
       ? feeData.maxPriorityFeePerGas?.mul(PREMIUM).div(100)
       : minPriorityFee
 
-    // Log the gas prices we're using
-    logger.info(
-      `Base maxFeePerGas: ${ethers.utils.formatUnits(
-        feeData.maxFeePerGas || 0,
-        'gwei',
-      )} gwei`,
-    )
-    logger.info(
-      `Using maxFeePerGas: ${ethers.utils.formatUnits(
-        maxFeePerGas || 0,
-        'gwei',
-      )} gwei`,
-    )
-    logger.info(
-      `Using maxPriorityFeePerGas: ${ethers.utils.formatUnits(
-        maxPriorityFeePerGas || 0,
-        'gwei',
-      )} gwei`,
-    )
+    // Get the latest nonce and pending nonce
+    const latestNonce = await provider.getTransactionCount(from, 'latest')
+    const pendingNonce = await provider.getTransactionCount(from, 'pending')
 
     const tx = {
       from,
@@ -127,7 +111,16 @@ class HotWalletService {
       value: ethers.utils.parseEther(String(amount)),
       maxFeePerGas,
       maxPriorityFeePerGas,
-      nonce: await provider.getTransactionCount(from, 'latest'),
+      nonce: latestNonce,
+    }
+
+    logger.info(`Sending transaction: ${JSON.stringify(tx)}`, { tx })
+
+    // If there's a gap between latest and pending, there might be stuck transactions
+    if (pendingNonce > latestNonce + 1) {
+      logger.warn(
+        `Potential nonce gap detected. Latest: ${latestNonce}, Pending: ${pendingNonce}`,
+      )
     }
 
     // Send it

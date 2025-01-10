@@ -73,16 +73,54 @@ class HotWalletService {
       )
     }
 
-    // Get the gas price
-    const gasPrice = await provider.getGasPrice()
+    // Get fee data with premium
+    const feeData = await provider.getFeeData()
+    const PREMIUM = 200 // 100% premium
+    const MIN_BASE_FEE = 25 // Minimum base fee in gwei
+    const MIN_PRIORITY_FEE = 10 // Minimum priority fee in gwei
 
-    // Create the transaction
+    // Convert to wei
+    const minBaseFee = ethers.utils.parseUnits(MIN_BASE_FEE.toString(), 'gwei')
+    const minPriorityFee = ethers.utils.parseUnits(
+      MIN_PRIORITY_FEE.toString(),
+      'gwei',
+    )
+
+    // Calculate gas prices with premium and floors
+    const maxFeePerGas = feeData.maxFeePerGas
+      ?.mul(PREMIUM)
+      .div(100)
+      .gt(minBaseFee)
+      ? feeData.maxFeePerGas?.mul(PREMIUM).div(100)
+      : minBaseFee
+
+    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
+      ?.mul(PREMIUM)
+      .div(100)
+      .gt(minPriorityFee)
+      ? feeData.maxPriorityFeePerGas?.mul(PREMIUM).div(100)
+      : minPriorityFee
+
+    // Get the latest nonce and pending nonce
+    const latestNonce = await provider.getTransactionCount(from, 'latest')
+    const pendingNonce = await provider.getTransactionCount(from, 'pending')
+
     const tx = {
       from,
       to,
       value: ethers.utils.parseEther(String(amount)),
-      gasLimit: ethers.utils.hexlify(100000),
-      gasPrice,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      nonce: latestNonce,
+    }
+
+    logger.info(`Sending transaction: ${JSON.stringify(tx)}`, { tx })
+
+    // If there's a gap between latest and pending, there might be stuck transactions
+    if (pendingNonce > latestNonce + 1) {
+      logger.warn(
+        `Potential nonce gap detected. Latest: ${latestNonce}, Pending: ${pendingNonce}`,
+      )
     }
 
     // Send it

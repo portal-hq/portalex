@@ -31,7 +31,7 @@ class HotWalletService {
    * Initiates transfer of AMOUNT of eth to the to address.
    * Returns 200 if the request was successful
    */
-  async sendTransaction(to: string, amount: number, chainId: number) {
+  async sendTransaction(to: string, amount: number, chainId: string | number) {
     let from = this.address
     const privateKey = this.privateKey
 
@@ -48,10 +48,15 @@ class HotWalletService {
       throw new Error(`Address "${notAddress} is not a valid ethereum address.`)
     }
 
+    const formattedChainId: number =
+      typeof chainId === 'string' && chainId.includes(':')
+        ? Number(chainId.split(':')[1])
+        : Number(chainId)
+
     // Get the provider
     const alchemy = new Alchemy({
       apiKey: ALCHEMY_API_KEY,
-      network: this.getAlchemyNetwork(chainId),
+      network: this.getAlchemyNetwork(formattedChainId),
     })
     const provider = await alchemy.config.getProvider()
 
@@ -73,45 +78,31 @@ class HotWalletService {
       )
     }
 
-    // Get fee data with premium
-    const feeData = await provider.getFeeData()
-    const PREMIUM = 200 // 100% premium
-    const MIN_BASE_FEE = 25 // Minimum base fee in gwei
-    const MIN_PRIORITY_FEE = 10 // Minimum priority fee in gwei
-
-    // Convert to wei
-    const minBaseFee = ethers.utils.parseUnits(MIN_BASE_FEE.toString(), 'gwei')
-    const minPriorityFee = ethers.utils.parseUnits(
-      MIN_PRIORITY_FEE.toString(),
-      'gwei',
-    )
-
-    // Calculate gas prices with premium and floors
-    const maxFeePerGas = feeData.maxFeePerGas
-      ?.mul(PREMIUM)
-      .div(100)
-      .gt(minBaseFee)
-      ? feeData.maxFeePerGas?.mul(PREMIUM).div(100)
-      : minBaseFee
-
-    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
-      ?.mul(PREMIUM)
-      .div(100)
-      .gt(minPriorityFee)
-      ? feeData.maxPriorityFeePerGas?.mul(PREMIUM).div(100)
-      : minPriorityFee
-
-    // Get the latest nonce and pending nonce
+    // Check for pending transactions
     const latestNonce = await provider.getTransactionCount(from, 'latest')
     const pendingNonce = await provider.getTransactionCount(from, 'pending')
 
-    const tx = {
+    // Create basic transaction
+    const tx: Record<string, any> = {
       from,
       to,
       value: ethers.utils.parseEther(String(amount)),
-      maxFeePerGas,
-      maxPriorityFeePerGas,
       nonce: latestNonce,
+    }
+
+    // Only add gas price adjustments if there's a pending transaction
+    if (pendingNonce > latestNonce) {
+      const pendingCount = pendingNonce - latestNonce
+      const premium = 120 + pendingCount * 20 // Base 20% + 20% for each pending tx
+      logger.info(
+        `${pendingCount} pending transactions detected, using ${premium}% gas premium`,
+      )
+
+      const feeData = await provider.getFeeData()
+      tx.maxFeePerGas = feeData.maxFeePerGas?.mul(premium).div(100)
+      tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
+        ?.mul(premium)
+        .div(100)
     }
 
     logger.info(`Sending transaction: ${JSON.stringify(tx)}`, { tx })
@@ -143,6 +134,10 @@ class HotWalletService {
         return Network.ETH_MAINNET
       case 11155111:
         return Network.ETH_SEPOLIA
+      case 8453:
+        return Network.BASE_MAINNET
+      case 84532:
+        return Network.BASE_SEPOLIA
       default:
         throw new Error(`Chain ID ${chainId} not supported by Alchemy`)
     }

@@ -551,7 +551,7 @@ class MobileService {
    */
   async fundAddressByChainId(req: Request, res: Response): Promise<void> {
     try {
-      const SUPPORTED_CHAIN_IDS = ['eip155:11155111']
+      const SUPPORTED_CHAIN_IDS = ['eip155:11155111', 'eip155:84532']
 
       const { chainId, address } = req.params
       const { amount } = req.body as { amount: number }

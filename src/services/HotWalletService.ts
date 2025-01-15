@@ -78,21 +78,24 @@ class HotWalletService {
       )
     }
 
-    // Check for pending transactions
+    // Check for pending transactions and get the appropriate nonce
     const latestNonce = await provider.getTransactionCount(from, 'latest')
     const pendingNonce = await provider.getTransactionCount(from, 'pending')
+
+    // Use pendingNonce to ensure we don't reuse nonces for parallel transactions
+    const nonce = pendingNonce
 
     // Create basic transaction
     const tx: Record<string, any> = {
       from,
       to,
       value: ethers.utils.parseEther(String(amount)),
-      nonce: latestNonce,
+      nonce,
     }
 
-    // Only add gas price adjustments if there's a pending transaction
-    if (pendingNonce > latestNonce) {
-      const pendingCount = pendingNonce - latestNonce
+    // Adjust gas prices for pending transactions
+    const pendingCount = pendingNonce - latestNonce
+    if (pendingCount > 0) {
       const premium = 120 + pendingCount * 20 // Base 20% + 20% for each pending tx
       logger.info(
         `${pendingCount} pending transactions detected, using ${premium}% gas premium`,

@@ -840,7 +840,10 @@ class MobileService {
         // If it's a replacement error, retry after a delay.
         if (attempt < MAX_RETRIES) {
           logger.warn(
-            `[transferExchangeFunds] Attempt ${attempt} failed with replacement error, retrying after ${RETRY_DELAY}ms...`,
+            `[transferExchangeFunds] Attempt ${attempt} / ${MAX_RETRIES} failed with replacement error, retrying after ${RETRY_DELAY}ms...`,
+            {
+              lastError,
+            },
           )
           await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
         }

@@ -550,12 +550,12 @@ class MobileService {
    * Transfers an amount of test ETH from the exchange to the users wallet.
    */
   async fundAddressByChainId(req: Request, res: Response): Promise<void> {
+    const SUPPORTED_CHAIN_IDS = ['eip155:11155111', 'eip155:84532']
+
+    const { chainId, address } = req.params
+    const { amount } = req.body as { amount: number }
+
     try {
-      const SUPPORTED_CHAIN_IDS = ['eip155:11155111', 'eip155:84532']
-
-      const { chainId, address } = req.params
-      const { amount } = req.body as { amount: number }
-
       // Validate that the request body contains the required parameters
       if (!chainId || !address || !amount) {
         res.status(400).json({
@@ -607,9 +607,12 @@ class MobileService {
       )
       res.status(200).json({ txHash })
     } catch (error) {
-      logger.error(`[fundAddressByChainId] Error: ${error}`, {
-        error,
-      })
+      logger.error(
+        `[fundAddressByChainId] Error funding wallet ${address} on chain ${chainId}: ${error}`,
+        {
+          error,
+        },
+      )
       res.status(500).json({ message: 'Internal server error' })
     }
   }
@@ -788,23 +791,63 @@ class MobileService {
       throw new Error(`Address ${to} is not a valid ethereum address.`)
     }
 
+    const MAX_RETRIES = 3
+    const RETRY_DELAY = 2000 // 2 second delay between retries
+
+    // Check if the balance is sufficient
     const balance = await this.exchangeService.getBalance(chainId)
     if (amount >= 0 && Number(balance) < amount) {
       throw new Error(
-        `You're balance of ${balance} is too low to transfer ${amount} ETH (Chain ID: ${chainId}) to your portal wallet`,
+        `Your balance of ${balance} is too low to transfer ${amount} ETH (Chain ID: ${chainId}) to your portal wallet`,
       )
     }
 
-    return this.exchangeService
-      .sendTransaction(to, amount, chainId)
-      .then((txHash) => {
-        logger.info(`Transaction submitted, txHash: ${txHash}`)
+    // Try to send the transaction up to MAX_RETRIES times
+    // (only if it's a replacement error from sending multiple transactions in parallel)
+    let lastError
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        // Send the transaction
+        const txHash = await this.exchangeService.sendTransaction(
+          to,
+          amount,
+          chainId,
+        )
+        logger.info(
+          `[transferExchangeFunds] Transaction submitted on attempt ${attempt}, txHash: ${txHash}`,
+        )
         return txHash
-      })
-      .catch((error) => {
-        logger.error(`Error sending transaction: ${error}`)
-        throw error
-      })
+      } catch (error) {
+        lastError = error as { message: string }
+
+        // Check if the error is a replacement error.
+        const isReplacementError =
+          lastError?.message?.includes('REPLACEMENT_UNDERPRICED') ||
+          lastError?.message?.includes('replacement transaction underpriced')
+
+        // If it's not a replacement error, don't retry and throw the error.
+        if (!isReplacementError) {
+          throw error
+        }
+
+        // If it's a replacement error, retry after a delay.
+        if (attempt < MAX_RETRIES) {
+          logger.warn(
+            `[transferExchangeFunds] Attempt ${attempt} failed with replacement error, retrying after ${RETRY_DELAY}ms...`,
+          )
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
+        }
+      }
+    }
+
+    // If we've made it here, we've failed to send the transaction after MAX_RETRIES attempts.
+    logger.error(
+      `[transferExchangeFunds] Failed to send transaction after ${MAX_RETRIES} attempts`,
+      {
+        lastError,
+      },
+    )
+    throw lastError
   }
 
   /*

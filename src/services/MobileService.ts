@@ -791,8 +791,8 @@ class MobileService {
       throw new Error(`Address ${to} is not a valid ethereum address.`)
     }
 
-    const MAX_RETRIES = 3
-    const RETRY_DELAY = 2000 // 2 second delay between retries
+    const MAX_RETRIES = 10
+    const RETRY_DELAY = 2000 // 2 second delay between retries, so 10 retries is 20 seconds total.
 
     // Check if the balance is sufficient
     const balance = await this.exchangeService.getBalance(chainId)
@@ -824,7 +824,8 @@ class MobileService {
         const isReplacementError =
           lastError?.message?.includes('REPLACEMENT_UNDERPRICED') ||
           lastError?.message?.includes('replacement transaction underpriced') ||
-          lastError?.message?.includes('already known')
+          lastError?.message?.includes('already known') ||
+          lastError?.message?.includes('nonce has already been used')
 
         // If it's not a replacement error, don't retry and throw the error.
         if (!isReplacementError) {

@@ -828,6 +828,12 @@ class MobileService {
 
         // If it's not a replacement error, don't retry and throw the error.
         if (!isReplacementError) {
+          logger.error(
+            `[transferExchangeFunds] Failed to send transaction, got error: ${lastError?.message}`,
+            {
+              lastError,
+            },
+          )
           throw error
         }
 

@@ -126,7 +126,6 @@ class HotWalletService {
         return res.hash
       })
       .catch((error) => {
-        logger.error(`Error sending transaction: ${error}`)
         throw error
       })
   }

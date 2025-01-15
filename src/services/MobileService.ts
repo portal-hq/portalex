@@ -791,8 +791,8 @@ class MobileService {
       throw new Error(`Address ${to} is not a valid ethereum address.`)
     }
 
-    const MAX_RETRIES = 3
-    const RETRY_DELAY = 2000 // 2 second delay between retries
+    const MAX_RETRIES = 10
+    const RETRY_DELAY = 2000 // 2 second delay between retries, so 10 retries is 20 seconds total.
 
     // Check if the balance is sufficient
     const balance = await this.exchangeService.getBalance(chainId)

@@ -2,7 +2,10 @@ import { PrismaClient, User } from '@prisma/client'
 import { isAddress } from 'ethers/lib/utils'
 import { Request, Response } from 'express'
 
-import { CUSTODIAN_API_KEY } from '../config'
+import {
+  CUSTODIAN_API_KEY,
+  PRE_SIGN_ALERT_WEBHOOK_EVENT_TYPES,
+} from '../config'
 import PortalApi from '../libs/PortalApi'
 import {
   EntityNotFoundError,
@@ -867,7 +870,7 @@ class MobileService {
   async storeAlertWebhookEvent(req: Request, res: Response): Promise<void> {
     try {
       const { data, metadata, type } = req.body as {
-        data: Record<string, any>[]
+        data: any
         metadata: Record<string, any>
         type: string
       }
@@ -894,6 +897,33 @@ class MobileService {
           alertWebhookEventId: alertWebhookEvent.id,
         },
       )
+
+      // Handle pre-sign alert webhook event rejection + errors
+      if (
+        PRE_SIGN_ALERT_WEBHOOK_EVENT_TYPES.includes(type) &&
+        data?.signingRequest?.method === 'personal_sign'
+      ) {
+        const errorMessage =
+          '0x' + Buffer.from('e2e_error_signature').toString('hex')
+        const rejectMessage =
+          '0x' + Buffer.from('e2e_reject_signature').toString('hex')
+        const messageToSign = data?.signingRequest?.params
+
+        switch (messageToSign) {
+          case errorMessage:
+            res
+              .status(418) // 🫖 "I'm a teapot" status code, since we want to ensure non-400 status codes are treated as errors in e2e tests.
+              .json({ message: 'Erroring pre-sign alert webhook request' })
+            return
+          case rejectMessage:
+            res
+              .status(400)
+              .json({ message: 'Rejecting pre-sign alert webhook request' })
+            return
+          default:
+            break
+        }
+      }
 
       res.status(200).send({ alertWebhookEvent })
     } catch (error) {

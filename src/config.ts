@@ -60,3 +60,8 @@ export const MAGIC_LINK_FROM_NAME =
 // Alchemy Configuration
 // ==============================
 export const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY || ''
+
+// ==============================
+// Pre-sign Alert Webhook Event Types
+// ==============================
+export const PRE_SIGN_ALERT_WEBHOOK_EVENT_TYPES = ['PRE_SIGN_V1']

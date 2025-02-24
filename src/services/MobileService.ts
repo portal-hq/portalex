@@ -909,19 +909,24 @@ class MobileService {
           '0x' + Buffer.from('e2e_reject_signature').toString('hex')
         const messageToSign = data?.signingRequest?.params
 
-        switch (messageToSign) {
-          case errorMessage:
-            res
-              .status(418) // 🫖 "I'm a teapot" status code, since we want to ensure non-400 status codes are treated as errors in e2e tests.
-              .json({ message: 'Erroring pre-sign alert webhook request' })
-            return
-          case rejectMessage:
-            res
-              .status(400)
-              .json({ message: 'Rejecting pre-sign alert webhook request' })
-            return
-          default:
-            break
+        if (messageToSign === errorMessage) {
+          res
+            .status(418) // 🫖 "I'm a teapot" status code, since we want to ensure non-400 status codes are treated as errors in e2e tests.
+            .json({
+              message: 'Erroring pre-sign alert webhook request',
+              got: messageToSign,
+              expected: errorMessage,
+            })
+          return
+        }
+
+        if (messageToSign === rejectMessage) {
+          res.status(400).json({
+            message: 'Rejecting pre-sign alert webhook request',
+            got: messageToSign,
+            expected: rejectMessage,
+          })
+          return
         }
       }
 

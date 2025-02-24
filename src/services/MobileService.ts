@@ -909,7 +909,11 @@ class MobileService {
           '0x' + Buffer.from('e2e_reject_signature').toString('hex')
         const messageToSign = data?.signingRequest?.params
 
-        if (messageToSign === errorMessage) {
+        // Handle error requests
+        if (
+          typeof messageToSign === 'string' &&
+          messageToSign?.includes(errorMessage)
+        ) {
           res
             .status(418) // 🫖 "I'm a teapot" status code, since we want to ensure non-400 status codes are treated as errors in e2e tests.
             .json({
@@ -920,7 +924,11 @@ class MobileService {
           return
         }
 
-        if (messageToSign === rejectMessage) {
+        // Handle reject requests
+        if (
+          typeof messageToSign === 'string' &&
+          messageToSign?.includes(rejectMessage)
+        ) {
           res.status(400).json({
             message: 'Rejecting pre-sign alert webhook request',
             got: messageToSign,

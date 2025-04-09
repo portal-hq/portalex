@@ -206,10 +206,18 @@ app.post(
   },
 )
 
+app.patch(
+  '/mobile/:exchangeUserId/enable-eject',
+  async (req: Request, res: Response) => {
+    await mobileService.enableEject(req, res)
+  },
+)
+
+// Deprecated
 app.post(
   '/mobile/:exchangeUserId/prepare-eject',
   async (req: Request, res: Response) => {
-    await mobileService.prepareEject(req, res)
+    await mobileService.deprecated_enableEject(req, res)
   },
 )
 

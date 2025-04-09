@@ -1,4 +1,4 @@
-import axios, { AxiosError, isAxiosError } from 'axios'
+import axios, { AxiosError, AxiosResponse, isAxiosError } from 'axios'
 
 import { PORTAL_API_URL } from '../config'
 import { logger } from '../libs/logger'
@@ -78,7 +78,44 @@ class PortalApi {
       })
   }
 
-  async prepareEject(clientId: string, walletId: string): Promise<string> {
+  async enableEject(
+    clientId: string,
+    walletId: string,
+  ): Promise<{ ejectableUntil: string }> {
+    const headers = {
+      Authorization: `Bearer ${this.apiKey}`,
+    }
+
+    let response: AxiosResponse<{ ejectableUntil: string }>
+    try {
+      response = await axios.patch<{ ejectableUntil: string }>(
+        `${PORTAL_API_URL}/api/v3/custodians/me/clients/${clientId}/enable-eject`,
+        { walletId },
+        {
+          headers: headers,
+        },
+      )
+    } catch (error: any) {
+      const errorData = error.response?.data as {
+        error?: string
+      }
+      throw {
+        status: error.response?.status,
+        message: `Portal API Error: ${errorData.error}`,
+      }
+    }
+
+    logger.info(`Enable eject response`, {
+      responseData: response.data,
+    })
+
+    return response.data
+  }
+
+  async deprecated_enableEject(
+    clientId: string,
+    walletId: string,
+  ): Promise<string> {
     const headers = {
       Authorization: `Bearer ${this.apiKey}`,
     }
@@ -101,7 +138,7 @@ class PortalApi {
         }
       })
 
-    logger.info(`Prepare Eject Response: ${response.data}`)
+    logger.info(`Deprecated Enable Eject Response: ${response.data}`)
 
     return response.data
   }

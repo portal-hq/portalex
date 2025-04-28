@@ -65,3 +65,12 @@ export const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY || ''
 // Pre-sign Alert Webhook Event Types
 // ==============================
 export const PRE_SIGN_ALERT_WEBHOOK_EVENT_TYPES = ['PRE_SIGN_V1']
+
+// ==============================
+// Alert Webhook Event Types
+// ==============================
+export const ALERT_WEBHOOK_EVENT_TYPES = [
+  'EIP_155_TX_V1',
+  'SOLANA_TX_V1',
+  ...PRE_SIGN_ALERT_WEBHOOK_EVENT_TYPES,
+]

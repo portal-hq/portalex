@@ -3,6 +3,7 @@ import { isAddress } from 'ethers/lib/utils'
 import { Request, Response } from 'express'
 
 import {
+  ALERT_WEBHOOK_EVENT_TYPES,
   CUSTODIAN_API_KEY,
   PRE_SIGN_ALERT_WEBHOOK_EVENT_TYPES,
 } from '../config'
@@ -1047,6 +1048,7 @@ class MobileService {
     try {
       const { address } = req.params
       const since = req.query.since as string
+      const eventType = req.query.eventType as string
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 100 // Default to 100 if not specified
 
       logger.info(
@@ -1076,7 +1078,7 @@ class MobileService {
         return
       }
 
-      const whereClause: any = {
+      const whereClause: Record<string, any> = {
         event: {
           array_contains: [
             {
@@ -1088,10 +1090,24 @@ class MobileService {
         },
       }
 
+      // Add since filter if specified
       if (since) {
         whereClause.createdAt = {
           gte: since,
         }
+      }
+
+      // Add event type filter if specified
+      if (eventType) {
+        if (!ALERT_WEBHOOK_EVENT_TYPES.includes(eventType)) {
+          res.status(400).json({
+            message: `Invalid event type: ${eventType}. Valid event types are: ${ALERT_WEBHOOK_EVENT_TYPES.join(
+              ', ',
+            )}`,
+          })
+          return
+        }
+        whereClause.type = eventType
       }
 
       logger.info(`[getAlertWebhookEventsByAddress] Where clause`, {

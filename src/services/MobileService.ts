@@ -912,6 +912,10 @@ class MobileService {
       })
 
       if (!data || !type) {
+        logger.error(`[storeAlertWebhookEvent] Missing required parameters`, {
+          data,
+          type,
+        })
         throw new MissingParameterError('data or type')
       }
 
@@ -1078,17 +1082,7 @@ class MobileService {
         return
       }
 
-      const whereClause: Record<string, any> = {
-        event: {
-          array_contains: [
-            {
-              metadata: {
-                triggeredBy: address.toLowerCase(),
-              },
-            },
-          ],
-        },
-      }
+      const whereClause: Record<string, any> = {}
 
       // Add since filter if specified
       if (since) {
@@ -1108,6 +1102,39 @@ class MobileService {
           return
         }
         whereClause.type = eventType
+      }
+
+      // Add triggeredBy filter if event type is EIP_155_TX_V1
+      if (eventType === 'EIP_155_TX_V1') {
+        whereClause.event = {
+          array_contains: [
+            {
+              metadata: {
+                triggeredBy: address.toLowerCase(),
+              },
+            },
+          ],
+        }
+      }
+      if (eventType === 'SOLANA_TX_V1') {
+        whereClause.event = {
+          array_contains: [
+            {
+              nativeTransfers: {
+                some: {
+                  or: [
+                    {
+                      toUserAccount: address,
+                    },
+                    {
+                      fromUserAccount: address,
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        }
       }
 
       logger.info(`[getAlertWebhookEventsByAddress] Where clause`, {

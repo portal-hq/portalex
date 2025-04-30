@@ -1116,38 +1116,28 @@ class MobileService {
           ],
         }
       }
-      if (eventType === 'SOLANA_TX_V1') {
-        whereClause.event = {
-          array_contains: [
-            {
-              nativeTransfers: {
-                some: {
-                  or: [
-                    {
-                      toUserAccount: address,
-                    },
-                    {
-                      fromUserAccount: address,
-                    },
-                  ],
-                },
-              },
-            },
-          ],
-        }
-      }
 
       logger.info(`[getAlertWebhookEventsByAddress] Where clause`, {
         whereClause,
       })
 
-      const alertWebhookEvents = await this.prisma.alertWebhookEvent.findMany({
+      let alertWebhookEvents = await this.prisma.alertWebhookEvent.findMany({
         where: whereClause,
         orderBy: {
           createdAt: 'desc',
         },
         take: limit,
       })
+
+      if (eventType === 'SOLANA_TX_V1') {
+        alertWebhookEvents = alertWebhookEvents.filter((alertWebhookEvent) => {
+          return (alertWebhookEvent.event as any[]).some((event) => {
+            return (event.nativeTransfers as any[]).some((transfer) => {
+              return transfer.toUserAccount === address
+            })
+          })
+        })
+      }
 
       logger.info(
         `[getAlertWebhookEventsByAddress] Successfully fetched alert webhook events`,

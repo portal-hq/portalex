@@ -1121,7 +1121,7 @@ class MobileService {
         whereClause,
       })
 
-      let alertWebhookEvents = await this.prisma.alertWebhookEvent.findMany({
+      const alertWebhookEvents = await this.prisma.alertWebhookEvent.findMany({
         where: whereClause,
         orderBy: {
           createdAt: 'desc',
@@ -1129,26 +1129,32 @@ class MobileService {
         take: limit,
       })
 
+      let filteredAlertWebhookEvents = alertWebhookEvents
       if (eventType === 'SOLANA_TX_V1') {
-        alertWebhookEvents = alertWebhookEvents.filter((alertWebhookEvent) => {
-          return (alertWebhookEvent.event as any[]).some((event) => {
-            return (event.nativeTransfers as any[]).some((transfer) => {
-              return transfer.toUserAccount === address
+        filteredAlertWebhookEvents = alertWebhookEvents.filter(
+          (alertWebhookEvent) => {
+            return (alertWebhookEvent.event as any[]).some((event) => {
+              return (event.nativeTransfers as any[]).some((transfer) => {
+                return transfer.toUserAccount === address
+              })
             })
-          })
-        })
+          },
+        )
       }
 
       logger.info(
         `[getAlertWebhookEventsByAddress] Successfully fetched alert webhook events`,
         {
-          count: alertWebhookEvents.length,
+          unfilteredCount: alertWebhookEvents.length,
+          unfilteredAlertWebhookEvents: alertWebhookEvents,
+          filteredCount: filteredAlertWebhookEvents.length,
+          filteredAlertWebhookEvents: filteredAlertWebhookEvents,
           since,
           limit,
         },
       )
 
-      res.status(200).json({ alertWebhookEvents })
+      res.status(200).json({ alertWebhookEvents: filteredAlertWebhookEvents })
     } catch (error) {
       logger.error(
         `[getAlertWebhookEventsByAddress] Error fetching alert webhook events`,

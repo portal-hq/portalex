@@ -1135,7 +1135,10 @@ class MobileService {
           (alertWebhookEvent) => {
             return (alertWebhookEvent.event as any[]).some((event) => {
               return (event.nativeTransfers as any[]).some((transfer) => {
-                return transfer.toUserAccount === address
+                return (
+                  transfer.toUserAccount === address ||
+                  transfer.fromUserAccount === address
+                )
               })
             })
           },
@@ -1145,12 +1148,14 @@ class MobileService {
       logger.info(
         `[getAlertWebhookEventsByAddress] Successfully fetched alert webhook events`,
         {
+          address,
+          since,
+          limit,
+          eventType,
           unfilteredCount: alertWebhookEvents.length,
           unfilteredAlertWebhookEvents: alertWebhookEvents,
           filteredCount: filteredAlertWebhookEvents.length,
           filteredAlertWebhookEvents: filteredAlertWebhookEvents,
-          since,
-          limit,
         },
       )
 

@@ -3,6 +3,7 @@ import { isAddress } from 'ethers/lib/utils'
 import { Request, Response } from 'express'
 
 import {
+  ALERT_WEBHOOK_EVENT_TYPES,
   CUSTODIAN_API_KEY,
   PRE_SIGN_ALERT_WEBHOOK_EVENT_TYPES,
 } from '../config'
@@ -911,6 +912,10 @@ class MobileService {
       })
 
       if (!data || !type) {
+        logger.error(`[storeAlertWebhookEvent] Missing required parameters`, {
+          data,
+          type,
+        })
         throw new MissingParameterError('data or type')
       }
 
@@ -1047,6 +1052,7 @@ class MobileService {
     try {
       const { address } = req.params
       const since = req.query.since as string
+      const eventType = req.query.eventType as string
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 100 // Default to 100 if not specified
 
       logger.info(
@@ -1076,8 +1082,31 @@ class MobileService {
         return
       }
 
-      const whereClause: any = {
-        event: {
+      const whereClause: Record<string, any> = {}
+
+      // Add since filter if specified
+      if (since) {
+        whereClause.createdAt = {
+          gte: since,
+        }
+      }
+
+      // Add event type filter if specified
+      if (eventType) {
+        if (!ALERT_WEBHOOK_EVENT_TYPES.includes(eventType)) {
+          res.status(400).json({
+            message: `Invalid event type: ${eventType}. Valid event types are: ${ALERT_WEBHOOK_EVENT_TYPES.join(
+              ', ',
+            )}`,
+          })
+          return
+        }
+        whereClause.type = eventType
+      }
+
+      // Add triggeredBy filter if event type is EIP_155_TX_V1
+      if (eventType === 'EIP_155_TX_V1') {
+        whereClause.event = {
           array_contains: [
             {
               metadata: {
@@ -1085,12 +1114,6 @@ class MobileService {
               },
             },
           ],
-        },
-      }
-
-      if (since) {
-        whereClause.createdAt = {
-          gte: since,
         }
       }
 
@@ -1106,16 +1129,37 @@ class MobileService {
         take: limit,
       })
 
+      let filteredAlertWebhookEvents = alertWebhookEvents
+      if (eventType === 'SOLANA_TX_V1') {
+        filteredAlertWebhookEvents = alertWebhookEvents.filter(
+          (alertWebhookEvent) => {
+            return (alertWebhookEvent.event as any[]).some((event) => {
+              return (event.nativeTransfers as any[]).some((transfer) => {
+                return (
+                  transfer.toUserAccount === address ||
+                  transfer.fromUserAccount === address
+                )
+              })
+            })
+          },
+        )
+      }
+
       logger.info(
         `[getAlertWebhookEventsByAddress] Successfully fetched alert webhook events`,
         {
-          count: alertWebhookEvents.length,
+          address,
           since,
           limit,
+          eventType,
+          unfilteredCount: alertWebhookEvents.length,
+          unfilteredAlertWebhookEvents: alertWebhookEvents,
+          filteredCount: filteredAlertWebhookEvents.length,
+          filteredAlertWebhookEvents: filteredAlertWebhookEvents,
         },
       )
 
-      res.status(200).json({ alertWebhookEvents })
+      res.status(200).json({ alertWebhookEvents: filteredAlertWebhookEvents })
     } catch (error) {
       logger.error(
         `[getAlertWebhookEventsByAddress] Error fetching alert webhook events`,

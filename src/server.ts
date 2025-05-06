@@ -31,7 +31,15 @@ const prisma = new PrismaClient()
 const exchangeWallet = EthersWallet.createRandom()
 const exchangePrivateKey =
   EXCHANGE_WALLET_PRIVATE_KEY || exchangeWallet.privateKey
-const exchangePublicKey = EXCHANGE_WALLET_ADDRESS || exchangeWallet.address
+const exchangePublicKey: string =
+  EXCHANGE_WALLET_ADDRESS || exchangeWallet.address || ''
+
+if (!exchangePublicKey) {
+  throw new Error('EXCHANGE_WALLET_ADDRESS is not set')
+}
+if (!exchangePrivateKey) {
+  throw new Error('EXCHANGE_WALLET_PRIVATE_KEY is not set')
+}
 
 logger.info(
   `\n\nEXCHANGE WALLET PUBLIC ADDRESS: ${exchangePublicKey}\nAdd test eth to this wallet to fund the PortalEx omnibus wallet.\n\n`,

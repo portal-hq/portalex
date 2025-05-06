@@ -1133,7 +1133,9 @@ class MobileService {
       if (eventType === 'SOLANA_TX_V1') {
         filteredAlertWebhookEvents = alertWebhookEvents.filter(
           (alertWebhookEvent) => {
-            return (alertWebhookEvent.event as any[]).some((event) => {
+            return (
+              alertWebhookEvent.event as { rawEvents: any[] }
+            ).rawEvents.some((event) => {
               return (event.nativeTransfers as any[]).some((transfer) => {
                 return (
                   transfer.toUserAccount === address ||

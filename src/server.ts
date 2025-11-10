@@ -241,12 +241,10 @@ app.get(
     )
 
     logger.info(
-      `Redirecting to ${req.protocol}://${req.hostname}/clients/token/validate?otp=REDACTED`,
+      `Redirecting to https://${req.hostname}/clients/token/validate?otp=REDACTED`,
     )
 
-    res.redirect(
-      `${req.protocol}://${req.hostname}/clients/token/validate?otp=${webOtp}`,
-    )
+    res.redirect(`https://${req.hostname}/clients/token/validate?otp=${webOtp}`)
   },
 )
 

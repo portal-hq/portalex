@@ -37,6 +37,9 @@ export const PORTAL_API_URL =
 export const PORTAL_WEB_URL =
   process.env.PORTAL_WEB_URL || 'https://web.portalhq.io'
 export const CUSTODIAN_API_KEY = process.env.CUSTODIAN_API_KEY || 'test-api-key'
+export const ORIGIN_WHITELIST = process.env.ORIGIN_WHITELIST
+  ? process.env.ORIGIN_WHITELIST?.split(',')
+  : PORTAL_WEB_URL
 
 // ==============================
 // Webhook Configuration

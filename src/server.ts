@@ -11,11 +11,11 @@ import morgan from 'morgan'
 import {
   EXCHANGE_WALLET_ADDRESS,
   EXCHANGE_WALLET_PRIVATE_KEY,
-  PORTAL_WEB_URL,
   SENDGRID_API_KEY,
   MAGIC_LINK_REDIRECT_URL,
   MAGIC_LINK_FROM_EMAIL,
   MAGIC_LINK_FROM_NAME,
+  ORIGIN_WHITELIST,
 } from './config'
 import { alertWebhookMiddleware, authMiddleware } from './libs/auth'
 import { logger } from './libs/logger'
@@ -233,14 +233,16 @@ app.get(
   '/portal/:exchangeUserId/authenticate',
   cors({
     credentials: true,
-    origin: PORTAL_WEB_URL,
+    origin: ORIGIN_WHITELIST,
   }),
   async (req: Request, res: Response) => {
     const webOtp = await webService.getWebOtp(
       parseInt(req.params.exchangeUserId),
     )
 
-    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
+    res.redirect(
+      `${req.protocol}://${req.hostname}/clients/token/validate?otp=${webOtp}`,
+    )
   },
 )
 

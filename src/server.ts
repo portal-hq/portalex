@@ -240,6 +240,10 @@ app.get(
       parseInt(req.params.exchangeUserId),
     )
 
+    logger.info(
+      `Redirecting to ${req.protocol}://${req.hostname}/clients/token/validate?otp=REDACTED`,
+    )
+
     res.redirect(
       `${req.protocol}://${req.hostname}/clients/token/validate?otp=${webOtp}`,
     )

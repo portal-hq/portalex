@@ -242,6 +242,9 @@ app.get(
 
     logger.info(
       `Redirecting to https://${req.hostname}/clients/token/validate?otp=REDACTED`,
+      {
+        originWhitelist: ORIGIN_WHITELIST,
+      },
     )
 
     res.redirect(`https://${req.hostname}/clients/token/validate?otp=${webOtp}`)

@@ -16,6 +16,7 @@ import {
   MAGIC_LINK_FROM_EMAIL,
   MAGIC_LINK_FROM_NAME,
   ORIGIN_WHITELIST,
+  PORTAL_WEB_URL,
 } from './config'
 import { alertWebhookMiddleware, authMiddleware } from './libs/auth'
 import { logger } from './libs/logger'
@@ -241,13 +242,13 @@ app.get(
     )
 
     logger.info(
-      `Redirecting to https://${req.hostname}/clients/token/validate?otp=REDACTED`,
+      `Redirecting to ${PORTAL_WEB_URL}/clients/token/validate?otp=REDACTED`,
       {
         originWhitelist: ORIGIN_WHITELIST,
       },
     )
 
-    res.redirect(`https://${req.hostname}/clients/token/validate?otp=${webOtp}`)
+    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
   },
 )
 

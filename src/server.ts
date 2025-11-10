@@ -233,7 +233,7 @@ app.get(
   '/portal/:exchangeUserId/authenticate',
   cors({
     credentials: true,
-    origin: ORIGIN_WHITELIST,
+    origin: ORIGIN_WHITELIST[0],
   }),
   async (req: Request, res: Response) => {
     const webOtp = await webService.getWebOtp(

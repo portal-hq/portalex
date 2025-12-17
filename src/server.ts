@@ -234,7 +234,26 @@ app.get(
   '/portal/:exchangeUserId/authenticate',
   cors({
     credentials: true,
-    origin: ORIGIN_WHITELIST[0],
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, origin?: string | boolean) => void,
+    ) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) {
+        callback(null, true)
+        return
+      }
+      // Check if origin is in whitelist
+      const whitelist = Array.isArray(ORIGIN_WHITELIST)
+        ? ORIGIN_WHITELIST
+        : [ORIGIN_WHITELIST]
+      if (whitelist.includes(origin)) {
+        callback(null, origin)
+      } else {
+        logger.warn(`CORS blocked origin: ${origin}, whitelist: ${whitelist}`)
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
   }),
   async (req: Request, res: Response) => {
     const webOtp = await webService.getWebOtp(

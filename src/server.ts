@@ -260,14 +260,39 @@ app.get(
       parseInt(req.params.exchangeUserId),
     )
 
+    // Determine redirect URL based on the requesting origin's root domain
+    const origin = req.get('Origin')
+    let redirectUrl = PORTAL_WEB_URL
+
+    if (origin) {
+      try {
+        const url = new URL(origin)
+        const hostname = url.hostname
+
+        // Extract root domain and map to web subdomain
+        if (hostname.endsWith('portalhq-passkey.io')) {
+          redirectUrl = 'https://web.portalhq-passkey.io'
+        } else if (hostname.endsWith('portalhq-passkey.dev')) {
+          redirectUrl = 'https://web.portalhq-passkey.dev'
+        } else if (hostname.endsWith('portalhq.io')) {
+          redirectUrl = 'https://web.portalhq.io'
+        } else if (hostname.endsWith('portalhq.dev')) {
+          redirectUrl = 'https://web.portalhq.dev'
+        }
+      } catch {
+        // Invalid origin URL, use default
+      }
+    }
+
     logger.info(
-      `Redirecting to ${PORTAL_WEB_URL}/clients/token/validate?otp=REDACTED`,
+      `Redirecting to ${redirectUrl}/clients/token/validate?otp=REDACTED`,
       {
         originWhitelist: ORIGIN_WHITELIST,
+        requestOrigin: origin,
       },
     )
 
-    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
+    res.redirect(`${redirectUrl}/clients/token/validate?otp=${webOtp}`)
   },
 )
 

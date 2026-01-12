@@ -38,6 +38,18 @@ export const PORTAL_WEB_URL =
   process.env.PORTAL_WEB_URL || 'https://web.portalhq.io'
 export const CUSTODIAN_API_KEY = process.env.CUSTODIAN_API_KEY || 'test-api-key'
 
+// Default allowed origins for CORS with credentials
+const DEFAULT_ORIGIN_WHITELIST = [
+  'https://web.portalhq-passkey.dev',
+  'https://www.portalhq-passkey.dev',
+  'https://web.portalhq.dev',
+  'https://www.portalhq.dev',
+  'https://web.portalhq.io',
+  'https://www.portalhq.io',
+]
+export const ORIGIN_WHITELIST = process.env.ORIGIN_WHITELIST
+  ? process.env.ORIGIN_WHITELIST.split(',')
+  : DEFAULT_ORIGIN_WHITELIST
 // ==============================
 // Webhook Configuration
 // ==============================

@@ -16,6 +16,7 @@ import {
   MAGIC_LINK_REDIRECT_URL,
   MAGIC_LINK_FROM_EMAIL,
   MAGIC_LINK_FROM_NAME,
+  ORIGIN_WHITELIST,
 } from './config'
 import { alertWebhookMiddleware, authMiddleware } from './libs/auth'
 import { logger } from './libs/logger'
@@ -233,14 +234,65 @@ app.get(
   '/portal/:exchangeUserId/authenticate',
   cors({
     credentials: true,
-    origin: PORTAL_WEB_URL,
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, origin?: string | boolean) => void,
+    ) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) {
+        callback(null, true)
+        return
+      }
+      // Check if origin is in whitelist
+      const whitelist = Array.isArray(ORIGIN_WHITELIST)
+        ? ORIGIN_WHITELIST
+        : [ORIGIN_WHITELIST]
+      if (whitelist.includes(origin)) {
+        callback(null, origin)
+      } else {
+        logger.warn(`CORS blocked origin: ${origin}, whitelist: ${whitelist}`)
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
   }),
   async (req: Request, res: Response) => {
     const webOtp = await webService.getWebOtp(
       parseInt(req.params.exchangeUserId),
     )
 
-    res.redirect(`${PORTAL_WEB_URL}/clients/token/validate?otp=${webOtp}`)
+    // Determine redirect URL based on the requesting origin's root domain
+    const origin = req.get('Origin')
+    let redirectUrl = PORTAL_WEB_URL
+
+    if (origin) {
+      try {
+        const url = new URL(origin)
+        const hostname = url.hostname
+
+        // Extract root domain and map to web subdomain
+        if (hostname.endsWith('portalhq-passkey.io')) {
+          redirectUrl = 'https://web.portalhq-passkey.io'
+        } else if (hostname.endsWith('portalhq-passkey.dev')) {
+          redirectUrl = 'https://web.portalhq-passkey.dev'
+        } else if (hostname.endsWith('portalhq.io')) {
+          redirectUrl = 'https://web.portalhq.io'
+        } else if (hostname.endsWith('portalhq.dev')) {
+          redirectUrl = 'https://web.portalhq.dev'
+        }
+      } catch {
+        // Invalid origin URL, use default
+      }
+    }
+
+    logger.info(
+      `Redirecting to ${redirectUrl}/clients/token/validate?otp=REDACTED`,
+      {
+        originWhitelist: ORIGIN_WHITELIST,
+        requestOrigin: origin,
+      },
+    )
+
+    res.redirect(`${redirectUrl}/clients/token/validate?otp=${webOtp}`)
   },
 )
 

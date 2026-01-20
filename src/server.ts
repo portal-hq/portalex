@@ -261,22 +261,30 @@ app.get(
     )
 
     // Determine redirect URL based on the requesting origin's root domain
+    // Only use origin if it's in the whitelist (defense-in-depth, CORS already validates)
     const origin = req.get('Origin')
     let redirectUrl = PORTAL_WEB_URL
+    const whitelist = Array.isArray(ORIGIN_WHITELIST)
+      ? ORIGIN_WHITELIST
+      : [ORIGIN_WHITELIST]
 
-    if (origin) {
+    if (origin && whitelist.includes(origin)) {
       try {
         const url = new URL(origin)
         const hostname = url.hostname
 
+        // Check if hostname matches exactly or is a subdomain of the base domain
+        const matchesDomain = (host: string, baseDomain: string): boolean =>
+          host === baseDomain || host.endsWith(`.${baseDomain}`)
+
         // Extract root domain and map to web subdomain
-        if (hostname.endsWith('portalhq-passkey.io')) {
+        if (matchesDomain(hostname, 'portalhq-passkey.io')) {
           redirectUrl = 'https://web.portalhq-passkey.io'
-        } else if (hostname.endsWith('portalhq-passkey.dev')) {
+        } else if (matchesDomain(hostname, 'portalhq-passkey.dev')) {
           redirectUrl = 'https://web.portalhq-passkey.dev'
-        } else if (hostname.endsWith('portalhq.io')) {
+        } else if (matchesDomain(hostname, 'portalhq.io')) {
           redirectUrl = 'https://web.portalhq.io'
-        } else if (hostname.endsWith('portalhq.dev')) {
+        } else if (matchesDomain(hostname, 'portalhq.dev')) {
           redirectUrl = 'https://web.portalhq.dev'
         }
       } catch {

@@ -49,6 +49,8 @@ const DEFAULT_ORIGIN_WHITELIST = [
 ]
 export const ORIGIN_WHITELIST = process.env.ORIGIN_WHITELIST
   ? process.env.ORIGIN_WHITELIST.split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
   : DEFAULT_ORIGIN_WHITELIST
 // ==============================
 // Webhook Configuration

@@ -40,6 +40,8 @@ export const CUSTODIAN_API_KEY = process.env.CUSTODIAN_API_KEY || 'test-api-key'
 
 // Default allowed origins for CORS with credentials
 const DEFAULT_ORIGIN_WHITELIST = [
+  'https://web.portalhq-passkey.io',
+  'https://www.portalhq-passkey.io',
   'https://web.portalhq-passkey.dev',
   'https://www.portalhq-passkey.dev',
   'https://web.portalhq.dev',

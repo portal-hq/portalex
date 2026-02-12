@@ -5,6 +5,7 @@ import { Request, Response } from 'express'
 import {
   ALERT_WEBHOOK_EVENT_TYPES,
   CUSTODIAN_API_KEY,
+  EXCHANGE_WALLET_ADDRESS,
   PRE_SIGN_ALERT_WEBHOOK_EVENT_TYPES,
 } from '../config'
 import PortalApi from '../libs/PortalApi'
@@ -833,7 +834,7 @@ class MobileService {
     const balance = await this.exchangeService.getBalance(chainId)
     if (amount >= 0 && Number(balance) < amount) {
       throw new Error(
-        `Your balance of ${balance} is too low to transfer ${amount} ETH (Chain ID: ${chainId}) to your portal wallet`,
+        `Your balance of ${balance} is too low to transfer ${amount} ETH (Chain ID: ${chainId}) to your portal wallet, check the balance of the funder ${EXCHANGE_WALLET_ADDRESS}`,
       )
     }
 

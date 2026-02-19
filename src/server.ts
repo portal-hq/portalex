@@ -366,6 +366,13 @@ app.get(
   },
 )
 
+app.get(
+  '/alerts/webhook/events/by-signature/:signature',
+  async (req: Request, res: Response) => {
+    await mobileService.getAlertWebhookEventsBySignature(req, res)
+  },
+)
+
 app.listen(port, () =>
   logger.info(`PortalEx Server listening on port ${port}!`),
 )

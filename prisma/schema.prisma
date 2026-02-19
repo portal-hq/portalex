@@ -8,12 +8,15 @@ datasource db {
 }
 
 model AlertWebhookEvent {
-  createdAt DateTime @default(now())
-  event     Json
-  id        String   @id @default(cuid())
-  metadata  Json
-  type      String
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  event      Json
+  id         String   @id @default(cuid())
+  metadata   Json
+  signatures String?
+  type       String
+  updatedAt  DateTime @updatedAt
+
+  @@index([signatures])
 }
 
 model ClientBackupShare {

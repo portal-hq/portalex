@@ -897,6 +897,50 @@ class MobileService {
     throw lastError
   }
 
+  /**
+   * Extract signature strings from webhook event data by type.
+   * EIP_155_TX_V1: from data array (metadata.transactionHash) and from request
+   * metadata.logs (topic1 = user op hash, transactionHash); deduped.
+   * SOLANA_TX_V1: rawEvents[].signature.
+   * Other types: empty array.
+   */
+  private extractSignatures(type: string, data: any, metadata?: any): string[] {
+    const seen = new Set<string>()
+    const push = (s: string) => {
+      if (typeof s === 'string' && s && !seen.has(s)) {
+        seen.add(s)
+        return true
+      }
+      return false
+    }
+
+    if (type === 'EIP_155_TX_V1') {
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          const hash = item?.metadata?.transactionHash as string
+          push(hash)
+        }
+      }
+      if (metadata && Array.isArray(metadata.logs)) {
+        for (const log of metadata.logs) {
+          push(log?.topic1 as string)
+          push(log?.transactionHash as string)
+        }
+      }
+      return Array.from(seen)
+    }
+
+    if (type === 'SOLANA_TX_V1' && data && Array.isArray(data.rawEvents)) {
+      for (const ev of data.rawEvents) {
+        const sig = ev?.signature as string
+        if (typeof sig === 'string' && sig) seen.add(sig)
+      }
+      return Array.from(seen)
+    }
+
+    return []
+  }
+
   /*
    * Store an alert webhook event for a user
    */
@@ -920,11 +964,16 @@ class MobileService {
         throw new MissingParameterError('data or type')
       }
 
+      const signatureList = this.extractSignatures(type, data, metadata)
+      const signatures =
+        signatureList.length > 0 ? signatureList.join('|') : null
+
       const alertWebhookEvent = await this.prisma.alertWebhookEvent.create({
         data: {
           event: data,
           metadata,
           type,
+          signatures,
         },
       })
 
@@ -1166,6 +1215,66 @@ class MobileService {
     } catch (error) {
       logger.error(
         `[getAlertWebhookEventsByAddress] Error fetching alert webhook events`,
+        {
+          error,
+        },
+      )
+      res.status(500).json({ message: 'Internal server error' })
+    }
+  }
+
+  /*
+   * Get alert webhook events by signature (ILIKE search on signatures column)
+   */
+  async getAlertWebhookEventsBySignature(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const { signature } = req.params
+
+      logger.info(
+        `[getAlertWebhookEventsBySignature] Received request for alert webhook events`,
+        {
+          signature,
+        },
+      )
+
+      if (
+        !signature ||
+        typeof signature !== 'string' ||
+        signature.trim() === ''
+      ) {
+        res
+          .status(400)
+          .json({ message: 'signature is required and must be non-empty' })
+        return
+      }
+
+      const whereClause: Record<string, any> = {
+        signatures: {
+          contains: signature,
+          mode: 'insensitive',
+        },
+      }
+
+      const alertWebhookEvents = await this.prisma.alertWebhookEvent.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+      })
+
+      logger.info(
+        `[getAlertWebhookEventsBySignature] Successfully fetched alert webhook events`,
+        {
+          signature,
+          count: alertWebhookEvents.length,
+        },
+      )
+
+      res.status(200).json({ alertWebhookEvents })
+    } catch (error) {
+      logger.error(
+        `[getAlertWebhookEventsBySignature] Error fetching alert webhook events`,
         {
           error,
         },

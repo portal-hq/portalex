@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from '@prisma/client'
+import { type Prisma, PrismaClient } from '@prisma/client'
 import { isAxiosError } from 'axios'
 import bodyParser from 'body-parser'
 import cors from 'cors'
@@ -63,6 +63,10 @@ const exchangeService = new HotWalletService(
 )
 const mobileService: MobileService = new MobileService(prisma, exchangeService)
 const webService = new WebService(prisma)
+
+// Global middleware applied before all routes, including Noah webhooks.
+app.use(morgan('tiny'))
+app.use(cors())
 
 // Noah webhook needs raw bytes for ECDSA signature verification.
 // Mounted before bodyParser.json() so raw body is preserved.
@@ -153,8 +157,6 @@ app.post(
 )
 
 app.use(bodyParser.json())
-app.use(morgan('tiny'))
-app.use(cors())
 
 app.get('/ping', (req: Request, res: Response) => {
   res.status(200).send('pong')

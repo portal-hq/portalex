@@ -1,4 +1,4 @@
-import { type Prisma, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import { isAxiosError } from 'axios'
 import bodyParser from 'body-parser'
 import cors from 'cors'
@@ -7,7 +7,6 @@ import { Wallet as EthersWallet } from 'ethers'
 import express, { Application, Request, Response } from 'express'
 import 'express-async-errors'
 import rateLimit from 'express-rate-limit'
-import { StatusCodes } from 'http-status-codes'
 import morgan from 'morgan'
 
 import {
@@ -22,9 +21,9 @@ import {
   NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX,
   ORIGIN_WHITELIST,
 } from './config'
+import NoahController from './controllers/noah'
 import { alertWebhookMiddleware, authMiddleware } from './libs/auth'
 import { logger } from './libs/logger'
-import { isNoahEnvironment, verifyNoahWebhookSignature } from './libs/noah'
 import SendGridService from './libs/sendgrid'
 import HotWalletService from './services/HotWalletService'
 import MobileService from './services/MobileService'
@@ -63,6 +62,12 @@ const exchangeService = new HotWalletService(
 )
 const mobileService: MobileService = new MobileService(prisma, exchangeService)
 const webService = new WebService(prisma)
+const noahController = new NoahController({
+  prisma,
+  logger,
+  webhookPublicKeySandbox: NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX,
+  webhookPublicKeyProduction: NOAH_WEBHOOK_PUBLIC_KEY_PRODUCTION,
+})
 
 // Global middleware applied before all routes, including Noah webhooks.
 app.use(morgan('tiny'))
@@ -74,86 +79,7 @@ app.post(
   '/noah/webhooks/:noahEnvironment',
   express.raw({ type: 'application/json' }),
   noahWebhookLimiter,
-  async (req: Request, res: Response) => {
-    const noahEnvironment = req.params.noahEnvironment
-    if (!isNoahEnvironment(noahEnvironment)) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message:
-          'Invalid noahEnvironment. Expected one of: sandbox, production',
-      })
-    }
-
-    const signatureHeader = req.headers['webhook-signature']
-    const signature = Array.isArray(signatureHeader)
-      ? signatureHeader[0]
-      : signatureHeader
-
-    if (!signature) {
-      logger.warn(
-        '[noah.webhooks.ingest] Missing Webhook-Signature header',
-        noahEnvironment,
-      )
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: 'Unauthorized' })
-    }
-
-    if (!Buffer.isBuffer(req.body)) {
-      logger.warn(
-        '[noah.webhooks.ingest] Expected raw request body buffer',
-        noahEnvironment,
-      )
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: 'Invalid request body' })
-    }
-
-    const publicKey =
-      noahEnvironment === 'production'
-        ? NOAH_WEBHOOK_PUBLIC_KEY_PRODUCTION
-        : NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX
-
-    if (!verifyNoahWebhookSignature(req.body, signature, publicKey)) {
-      logger.warn('[noah.webhooks.ingest] Invalid webhook signature', {
-        noahEnvironment,
-      })
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: 'Unauthorized' })
-    }
-
-    let payload: Prisma.InputJsonValue
-    try {
-      payload = JSON.parse(req.body.toString('utf8')) as Prisma.InputJsonValue
-    } catch (error: unknown) {
-      logger.warn('[noah.webhooks.ingest] Failed to parse webhook payload', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        noahEnvironment,
-      })
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: 'Invalid JSON payload',
-      })
-    }
-
-    try {
-      await prisma.noahWebhookEvent.create({
-        data: {
-          noahEnvironment,
-          payload,
-        },
-      })
-    } catch (error: unknown) {
-      logger.error('[noah.webhooks.ingest] Failed to persist webhook payload', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        noahEnvironment,
-      })
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        message: 'Internal server error',
-      })
-    }
-
-    return res.status(StatusCodes.NO_CONTENT).send()
-  },
+  noahController.ingestWebhook,
 )
 
 app.use(bodyParser.json())

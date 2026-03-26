@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto'
 import { Wallet as EthersWallet } from 'ethers'
 import express, { Application, Request, Response } from 'express'
 import 'express-async-errors'
+import rateLimit from 'express-rate-limit'
 import { StatusCodes } from 'http-status-codes'
 import morgan from 'morgan'
 
@@ -32,6 +33,12 @@ import WebService from './services/WebService'
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
 const prisma = new PrismaClient()
+const noahWebhookLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
 
 const exchangeWallet = EthersWallet.createRandom()
 const exchangePrivateKey =
@@ -62,6 +69,7 @@ const webService = new WebService(prisma)
 app.post(
   '/noah/webhooks/:noahEnvironment',
   express.raw({ type: 'application/json' }),
+  noahWebhookLimiter,
   async (req: Request, res: Response) => {
     const noahEnvironment = req.params.noahEnvironment
     if (!isNoahEnvironment(noahEnvironment)) {

@@ -87,3 +87,13 @@ model Wallet {
 
   @@map("wallets")
 }
+
+model NoahWebhookEvent {
+  id              String   @id @default(cuid())
+  noahEnvironment String
+  payload         Json
+  createdAt       DateTime @default(now())
+
+  @@index([noahEnvironment, createdAt])
+  @@map("noah_webhook_events")
+}

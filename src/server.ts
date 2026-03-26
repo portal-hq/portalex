@@ -33,6 +33,7 @@ const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
 const prisma = new PrismaClient()
 const noahWebhookLimiter = rateLimit({
+  // 15-minute window with max 300 requests per IP
   windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,

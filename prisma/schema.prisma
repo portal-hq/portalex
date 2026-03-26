@@ -60,6 +60,16 @@ model MagicCode {
   id        Int      @id @default(autoincrement())
 }
 
+model NoahWebhookEvent {
+  id              String   @id @default(cuid())
+  noahEnvironment String
+  payload         Json
+  createdAt       DateTime @default(now())
+
+  @@index([noahEnvironment, createdAt])
+  @@map("noah_webhook_events")
+}
+
 model User {
   address        String?
   apiKey         String?
@@ -86,14 +96,4 @@ model Wallet {
   user User? @relation(fields: [userId], references: [id])
 
   @@map("wallets")
-}
-
-model NoahWebhookEvent {
-  id              String   @id @default(cuid())
-  noahEnvironment String
-  payload         Json
-  createdAt       DateTime @default(now())
-
-  @@index([noahEnvironment, createdAt])
-  @@map("noah_webhook_events")
 }

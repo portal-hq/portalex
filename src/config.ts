@@ -60,6 +60,9 @@ export const ORIGIN_WHITELIST = process.env.ORIGIN_WHITELIST
 export const ALERT_WEBHOOK_SECRET = process.env.ALERT_WEBHOOK_SECRET || 'secret'
 export const WEBHOOK_URL = process.env.WEBHOOK_URL || '' // need to set the host with /webhook at the end
 export const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'secret'
+// These are Noah-published webhook verification public keys (not secrets).
+// Keep env overrides for rotation/testing across environments.
+// See https://docs.noah.com/api-concepts/webhooks/configuration/#4-secure-your-endpoint
 export const NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX =
   process.env.NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX ||
   `-----BEGIN PUBLIC KEY-----

@@ -36,14 +36,23 @@ const prisma = new PrismaClient()
 // express-rate-limit rejects `true` (too permissive), so keep this as `number|false`.
 // Set TRUST_PROXY=0/false to disable, or TRUST_PROXY=<number> to tune hop count.
 const trustProxyEnv = process.env.TRUST_PROXY
-const trustProxy =
-  trustProxyEnv === '0' || trustProxyEnv === 'false'
-    ? false
-    : trustProxyEnv === undefined || trustProxyEnv === 'true'
-    ? 1
-    : Number.isNaN(Number(trustProxyEnv))
-    ? 1
-    : Number(trustProxyEnv)
+let trustProxy: number | false
+if (trustProxyEnv === '0' || trustProxyEnv === 'false') {
+  trustProxy = false
+} else if (trustProxyEnv === undefined || trustProxyEnv === 'true') {
+  trustProxy = 1
+} else {
+  const parsed = parseInt(trustProxyEnv, 10)
+  const isPositiveInteger = /^\d+$/.test(trustProxyEnv) && parsed > 0
+  if (!isPositiveInteger) {
+    logger.warn(
+      `Invalid TRUST_PROXY value "${trustProxyEnv}". Expected "true", "false", "0", or a positive integer. Falling back to 1.`,
+    )
+    trustProxy = 1
+  } else {
+    trustProxy = parsed
+  }
+}
 app.set('trust proxy', trustProxy)
 const noahWebhookLimiter = rateLimit({
   // 15-minute window with max 300 requests per IP

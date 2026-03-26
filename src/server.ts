@@ -32,12 +32,18 @@ import WebService from './services/WebService'
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
 const prisma = new PrismaClient()
-// Trust proxy by default in all environments so req.ip works behind proxies.
-// Set TRUST_PROXY=0 or TRUST_PROXY=false to disable explicitly.
+// Trust a single proxy hop by default so req.ip works behind load balancers.
+// express-rate-limit rejects `true` (too permissive), so keep this as `number|false`.
+// Set TRUST_PROXY=0/false to disable, or TRUST_PROXY=<number> to tune hop count.
+const trustProxyEnv = process.env.TRUST_PROXY
 const trustProxy =
-  process.env.TRUST_PROXY === '0' || process.env.TRUST_PROXY === 'false'
+  trustProxyEnv === '0' || trustProxyEnv === 'false'
     ? false
-    : true
+    : trustProxyEnv === undefined || trustProxyEnv === 'true'
+    ? 1
+    : Number.isNaN(Number(trustProxyEnv))
+    ? 1
+    : Number(trustProxyEnv)
 app.set('trust proxy', trustProxy)
 const noahWebhookLimiter = rateLimit({
   // 15-minute window with max 300 requests per IP

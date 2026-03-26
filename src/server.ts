@@ -32,6 +32,13 @@ import WebService from './services/WebService'
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
 const prisma = new PrismaClient()
+// Trust proxy by default in all environments so req.ip works behind proxies.
+// Set TRUST_PROXY=0 or TRUST_PROXY=false to disable explicitly.
+const trustProxy =
+  process.env.TRUST_PROXY === '0' || process.env.TRUST_PROXY === 'false'
+    ? false
+    : true
+app.set('trust proxy', trustProxy)
 const noahWebhookLimiter = rateLimit({
   // 15-minute window with max 300 requests per IP
   windowMs: 15 * 60 * 1000,

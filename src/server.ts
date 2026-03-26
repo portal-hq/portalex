@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto'
 import { Wallet as EthersWallet } from 'ethers'
 import express, { Application, Request, Response } from 'express'
 import 'express-async-errors'
+import rateLimit from 'express-rate-limit'
 import morgan from 'morgan'
 
 import {
@@ -16,8 +17,11 @@ import {
   MAGIC_LINK_REDIRECT_URL,
   MAGIC_LINK_FROM_EMAIL,
   MAGIC_LINK_FROM_NAME,
+  NOAH_WEBHOOK_PUBLIC_KEY_PRODUCTION,
+  NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX,
   ORIGIN_WHITELIST,
 } from './config'
+import NoahController from './controllers/noah'
 import { alertWebhookMiddleware, authMiddleware } from './libs/auth'
 import { logger } from './libs/logger'
 import SendGridService from './libs/sendgrid'
@@ -28,6 +32,13 @@ import WebService from './services/WebService'
 const app: Application = express()
 const port: number = Number(process.env.PORT) || 3000
 const prisma = new PrismaClient()
+const noahWebhookLimiter = rateLimit({
+  // 15-minute window with max 300 requests per IP
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
 
 const exchangeWallet = EthersWallet.createRandom()
 const exchangePrivateKey =
@@ -52,10 +63,27 @@ const exchangeService = new HotWalletService(
 )
 const mobileService: MobileService = new MobileService(prisma, exchangeService)
 const webService = new WebService(prisma)
+const noahController = new NoahController({
+  prisma,
+  logger,
+  webhookPublicKeySandbox: NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX,
+  webhookPublicKeyProduction: NOAH_WEBHOOK_PUBLIC_KEY_PRODUCTION,
+})
 
-app.use(bodyParser.json())
+// Global middleware applied before all routes, including Noah webhooks.
 app.use(morgan('tiny'))
 app.use(cors())
+
+// Noah webhook needs raw bytes for ECDSA signature verification.
+// Mounted before bodyParser.json() so raw body is preserved.
+app.post(
+  '/noah/webhooks/:noahEnvironment',
+  express.raw({ type: 'application/json' }),
+  noahWebhookLimiter,
+  noahController.ingestWebhook,
+)
+
+app.use(bodyParser.json())
 
 app.get('/ping', (req: Request, res: Response) => {
   res.status(200).send('pong')

@@ -60,6 +60,23 @@ export const ORIGIN_WHITELIST = process.env.ORIGIN_WHITELIST
 export const ALERT_WEBHOOK_SECRET = process.env.ALERT_WEBHOOK_SECRET || 'secret'
 export const WEBHOOK_URL = process.env.WEBHOOK_URL || '' // need to set the host with /webhook at the end
 export const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || 'secret'
+// These are Noah-published webhook verification public keys (not secrets).
+// Keep env overrides for rotation/testing across environments.
+// See https://docs.noah.com/api-concepts/webhooks/configuration/#4-secure-your-endpoint
+export const NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX =
+  process.env.NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX ||
+  `-----BEGIN PUBLIC KEY-----
+MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEm8yBiD+kmVJ1Xc9sfRkDx0yo9+u8yiAD
+PngI20KoEswz0gflp8o/z66Abqz/m9A1CBecixWdeT72pA8NZBJI6L6Osd8RV+yx
+QArxeGKEVX/2QNrfPqeAKODHT5LdStGT
+-----END PUBLIC KEY-----`
+export const NOAH_WEBHOOK_PUBLIC_KEY_PRODUCTION =
+  process.env.NOAH_WEBHOOK_PUBLIC_KEY_PRODUCTION ||
+  `-----BEGIN PUBLIC KEY-----
+MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAELKJhxcUGJr3XgRrf+laSAVHvp31wFhE2
+XdicXvF0DAdKzSPN8bkSdjrsUA6nnVUq3M47Y7RUYugMfkagaYjUExQZVjpMFg0P
+DnXWl9y0dXYDq+pzYhAgL+MNpnY0eJ78
+-----END PUBLIC KEY-----`
 
 // ==============================
 // Email & Magic Links Configuration

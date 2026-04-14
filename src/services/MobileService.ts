@@ -933,6 +933,7 @@ class MobileService {
     if (
       [
         'SOLANA_REVOKE_V2',
+        'SOLANA_DELEGATED_TX_V2',
         'SOLANA_APPROVE_V2',
         'SOLANA_TX_V2',
         'SOLANA_TX_V1',

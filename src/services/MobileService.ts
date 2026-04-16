@@ -930,7 +930,17 @@ class MobileService {
       return Array.from(seen)
     }
 
-    if (type === 'SOLANA_TX_V1' && data && Array.isArray(data.rawEvents)) {
+    if (
+      [
+        'SOLANA_REVOKE_V2',
+        'SOLANA_DELEGATED_TRANSFER_V2',
+        'SOLANA_APPROVE_V2',
+        'SOLANA_TX_V2',
+        'SOLANA_TX_V1',
+        'SOLANA_APPROVE_V1',
+        'SOLANA_REVOKE_V1'
+      ].includes(type) && data && Array.isArray(data.rawEvents)
+    ) {
       for (const ev of data.rawEvents) {
         const sig = ev?.signature as string
         if (typeof sig === 'string' && sig) seen.add(sig)

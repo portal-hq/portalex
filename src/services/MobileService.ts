@@ -58,7 +58,7 @@ class MobileService {
 
       let user = await this.getUserByUsername(username).catch((error) => {
         if (error instanceof EntityNotFoundError) {
-          logger.error(`Failed login for user ${username}`)
+          logger.warn(`Failed login for user ${username}`)
           res
             .status(401)
             .json({ message: `Could not find a user with ${username}` })

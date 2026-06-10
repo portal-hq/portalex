@@ -12,7 +12,8 @@
     "emitDecoratorMetadata": true,
     "sourceMap": true,
     "types": ["node", "jest"],
-    "typeRoots": ["node_modules/@types"]
+    "typeRoots": ["node_modules/@types"],
+    "skipLibCheck": true
   },
   "include": ["./src/**/*.ts"],
   "exclude": ["node_modules", "build"]

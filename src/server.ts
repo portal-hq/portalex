@@ -4,7 +4,7 @@ import bodyParser from 'body-parser'
 import cors from 'cors'
 import { randomUUID } from 'crypto'
 import { Wallet as EthersWallet } from 'ethers'
-import express, { Application, Request, Response } from 'express'
+import express, { Application, Request, Response, NextFunction } from 'express'
 import 'express-async-errors'
 import rateLimit from 'express-rate-limit'
 import morgan from 'morgan'
@@ -23,6 +23,7 @@ import {
 } from './config'
 import NoahController from './controllers/noah'
 import { alertWebhookMiddleware, authMiddleware } from './libs/auth'
+import { HttpError } from './libs/errors'
 import { logger } from './libs/logger'
 import SendGridService from './libs/sendgrid'
 import HotWalletService from './services/HotWalletService'
@@ -400,6 +401,16 @@ app.get(
     await mobileService.getAlertWebhookEventsBySignature(req, res)
   },
 )
+
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof HttpError) {
+    res.status(err.HttpStatus).json({ message: err.message })
+    return
+  }
+
+  logger.error(err)
+  res.status(500).json({ message: 'Internal server error' })
+})
 
 app.listen(port, () =>
   logger.info(`PortalEx Server listening on port ${port}!`),

@@ -55,6 +55,16 @@ export const ORIGIN_WHITELIST = process.env.ORIGIN_WHITELIST
       .filter(Boolean)
   : DEFAULT_ORIGIN_WHITELIST
 // ==============================
+// API Key Configuration
+// ==============================
+// Comma-separated so a rotation can accept the old and the new key together.
+// No default value, because an empty list must deny every request.
+export const API_KEYS = (process.env.API_KEYS || '')
+  .split(',')
+  .map((key) => key.trim())
+  .filter(Boolean)
+
+// ==============================
 // Webhook Configuration
 // ==============================
 export const ALERT_WEBHOOK_SECRET = process.env.ALERT_WEBHOOK_SECRET || 'secret'

@@ -44,6 +44,44 @@ Which should return a `200` with the message `pong`.
 
 There is also a [Postman configuration file](./PortalEx.postman_collection.json) you can import if you prefer to use that over cURL.
 
+## API key
+
+Endpoints require an API key in the `x-api-key` header. A request without a
+valid key returns `401 Unauthorized`.
+
+These routes are exempt, because a third party calls each one and cannot hold
+our key. Each carries its own credential instead:
+
+| Route                                  | Its own credential           |
+| -------------------------------------- | ---------------------------- |
+| `GET /ping`                            | none, and it exposes no data |
+| `POST /noah/webhooks/:noahEnvironment` | ECDSA signature              |
+| `POST /webhook/backup`                 | `x-webhook-secret`           |
+| `POST /webhook/backup/fetch`           | `x-webhook-secret`           |
+| `POST /alerts/webhook/events`          | `x-webhook-secret`           |
+
+Every other route needs the API key, including the remaining `/alerts/*`
+routes, which have no credential of their own.
+
+Set the accepted keys in `API_KEYS`. The server refuses to start when the value
+is empty, so a missing environment variable cannot leave the service open.
+
+```
+API_KEYS=your-portalex-api-key
+```
+
+To rotate a key without downtime, comma-separate the old and the new value,
+move every caller to the new key, then drop the old one:
+
+```
+API_KEYS=old-key,new-key
+```
+
+The gate is mounted by position in `src/server.ts`. Everything below
+`app.use(apiKeyMiddleware)` is protected, so a new route is gated by default.
+The exempt routes sit in one block above it. Add a new route at the bottom of
+the file unless it genuinely belongs in that block.
+
 ## Creating a new user
 
 To test the Portal API create a new user:
@@ -52,6 +90,7 @@ To test the Portal API create a new user:
 curl \
   -X POST \
    -H "Content-Type: application/json" \
+   -H "x-api-key: $API_KEYS" \
    -d '{"username": "test"}' \
   localhost:3000/mobile/signup
 ```

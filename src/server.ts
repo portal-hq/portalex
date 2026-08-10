@@ -10,6 +10,7 @@ import rateLimit from 'express-rate-limit'
 import morgan from 'morgan'
 
 import {
+  API_KEYS,
   EXCHANGE_WALLET_ADDRESS,
   EXCHANGE_WALLET_PRIVATE_KEY,
   PORTAL_WEB_URL,
@@ -22,7 +23,11 @@ import {
   ORIGIN_WHITELIST,
 } from './config'
 import NoahController from './controllers/noah'
-import { alertWebhookMiddleware, authMiddleware } from './libs/auth'
+import {
+  alertWebhookMiddleware,
+  apiKeyMiddleware,
+  authMiddleware,
+} from './libs/auth'
 import { HttpError } from './libs/errors'
 import { logger } from './libs/logger'
 import SendGridService from './libs/sendgrid'
@@ -49,6 +54,11 @@ const exchangePrivateKey =
   EXCHANGE_WALLET_PRIVATE_KEY || exchangeWallet.privateKey
 const exchangePublicKey: string =
   EXCHANGE_WALLET_ADDRESS || exchangeWallet.address || ''
+
+// Refuse to boot without a key, so a missing env var cannot open the service.
+if (API_KEYS.length === 0) {
+  throw new Error('API_KEYS is not set')
+}
 
 if (!exchangePublicKey) {
   throw new Error('EXCHANGE_WALLET_ADDRESS is not set')
@@ -78,6 +88,17 @@ const noahController = new NoahController({
 app.use(morgan('tiny'))
 app.use(cors())
 
+/*
+ * Routes mounted above the API key gate.
+ * Each one is called by a third party that cannot hold our key, so each one
+ * carries its own credential instead. Nothing else belongs above the gate.
+ */
+
+// Render's health check. No credential, and it exposes no data.
+app.get('/ping', (req: Request, res: Response) => {
+  res.status(200).send('pong')
+})
+
 // Noah webhook needs raw bytes for ECDSA signature verification.
 // Mounted before bodyParser.json() so raw body is preserved.
 app.post(
@@ -87,11 +108,56 @@ app.post(
   noahController.ingestWebhook,
 )
 
-app.use(bodyParser.json())
+// The exempt routes parse their own body, which keeps the global JSON parser
+// below the gate. A malformed body on a gated route must still get a 401,
+// not a parser error.
+const parseJson = bodyParser.json()
 
-app.get('/ping', (req: Request, res: Response) => {
-  res.status(200).send('pong')
-})
+// Portal calls these with x-webhook-secret, which is their credential.
+app.post(
+  '/webhook/backup/fetch',
+  parseJson,
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    logger.info('Requested /webhook/backup/fetch', {
+      ip: req.ip,
+      forwardedFor: req.get('x-forwarded-for'),
+      userAgent: req.get('user-agent'),
+    })
+    await mobileService.getCustodianBackupShares(req, res)
+  },
+)
+
+app.post(
+  '/webhook/backup',
+  parseJson,
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    logger.info('Requested /webhook/backup', {
+      ip: req.ip,
+      forwardedFor: req.get('x-forwarded-for'),
+      userAgent: req.get('user-agent'),
+    })
+    await mobileService.storeCustodianBackupShare(req, res)
+  },
+)
+
+app.post(
+  '/alerts/webhook/events',
+  parseJson,
+  alertWebhookMiddleware,
+  async (req: Request, res: Response) => {
+    await mobileService.storeAlertWebhookEvent(req, res)
+  },
+)
+
+/*
+ * Every route below this line requires a valid x-api-key header.
+ * Mount order is the allowlist, so a new route is gated by default.
+ */
+app.use(apiKeyMiddleware)
+
+app.use(parseJson)
 
 /*
  * Auth endpoints
@@ -354,40 +420,6 @@ app.post(
   '/chains/:chainId/addresses/:address/fund',
   async (req: Request, res: Response) => {
     await mobileService.fundAddressByChainId(req, res)
-  },
-)
-
-app.post(
-  '/webhook/backup/fetch',
-  authMiddleware,
-  async (req: Request, res: Response) => {
-    logger.info('Requested /webhook/backup/fetch', {
-      ip: req.ip,
-      forwardedFor: req.get('x-forwarded-for'),
-      userAgent: req.get('user-agent'),
-    })
-    await mobileService.getCustodianBackupShares(req, res)
-  },
-)
-
-app.post(
-  '/webhook/backup',
-  authMiddleware,
-  async (req: Request, res: Response) => {
-    logger.info('Requested /webhook/backup', {
-      ip: req.ip,
-      forwardedFor: req.get('x-forwarded-for'),
-      userAgent: req.get('user-agent'),
-    })
-    await mobileService.storeCustodianBackupShare(req, res)
-  },
-)
-
-app.post(
-  '/alerts/webhook/events',
-  alertWebhookMiddleware,
-  async (req: Request, res: Response) => {
-    await mobileService.storeAlertWebhookEvent(req, res)
   },
 )
 

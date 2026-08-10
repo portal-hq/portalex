@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { createHash, timingSafeEqual } from 'crypto'
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto'
 import { Request, Response, NextFunction } from 'express'
 
 import { API_KEYS, WEBHOOK_SECRET, ALERT_WEBHOOK_SECRET } from '../config'
@@ -7,17 +7,28 @@ import { UnauthorizedError, WrongTokenFormatError } from './errors'
 
 new PrismaClient()
 
+// Fresh per process, and never stored or sent anywhere. It only has to make
+// the digests below unpredictable to a caller who is probing the comparison.
+const comparisonKey = randomBytes(32)
+
+/**
+ * Reduces a value to a fixed 32 bytes for comparison. This is the double HMAC
+ * pattern, not password storage. The digest exists so timingSafeEqual gets two
+ * equal-length buffers, which keeps the secret's length out of the comparison.
+ */
+function comparisonDigest(value: string): Buffer {
+  return createHmac('sha256', comparisonKey).update(value).digest()
+}
+
 /**
  * Compares a candidate against every accepted secret in constant time.
- * Hashing first gives both sides a fixed length, so the comparison never
- * leaks the secret's length, and the loop never exits early on a match.
+ * The loop never exits early, so a match position does not leak either.
  */
 function matchesAnySecret(candidate: string, secrets: string[]): boolean {
-  const candidateDigest = createHash('sha256').update(candidate).digest()
+  const candidateDigest = comparisonDigest(candidate)
 
   return secrets.reduce((matched: boolean, secret: string) => {
-    const secretDigest = createHash('sha256').update(secret).digest()
-    return timingSafeEqual(candidateDigest, secretDigest) || matched
+    return timingSafeEqual(candidateDigest, comparisonDigest(secret)) || matched
   }, false)
 }
 

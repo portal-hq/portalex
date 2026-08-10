@@ -31,6 +31,9 @@ import MobileService from './services/MobileService'
 import WebService from './services/WebService'
 
 const app: Application = express()
+// Render proxies through Cloudflare then its own load balancer, so skip 2 hops
+// to read the client IP from X-Forwarded-For. A hop count, never `true`.
+app.set('trust proxy', 2)
 const port: number = Number(process.env.PORT) || 3000
 const prisma = new PrismaClient()
 const noahWebhookLimiter = rateLimit({
@@ -334,6 +337,12 @@ app.get(
 )
 
 app.get('/portal/:exchangeUserId/otp', async (req: Request, res: Response) => {
+  logger.info('Requested /portal/:exchangeUserId/otp', {
+    ip: req.ip,
+    forwardedFor: req.get('x-forwarded-for'),
+    userAgent: req.get('user-agent'),
+  })
+
   const webOtp = await webService.getWebOtp(parseInt(req.params.exchangeUserId))
 
   res.json({
@@ -352,7 +361,11 @@ app.post(
   '/webhook/backup/fetch',
   authMiddleware,
   async (req: Request, res: Response) => {
-    logger.info('Requested by IP address:', req.ip, req.headers)
+    logger.info('Requested /webhook/backup/fetch', {
+      ip: req.ip,
+      forwardedFor: req.get('x-forwarded-for'),
+      userAgent: req.get('user-agent'),
+    })
     await mobileService.getCustodianBackupShares(req, res)
   },
 )
@@ -361,7 +374,11 @@ app.post(
   '/webhook/backup',
   authMiddleware,
   async (req: Request, res: Response) => {
-    logger.info('Requested by IP address:', req.ip, req.headers)
+    logger.info('Requested /webhook/backup', {
+      ip: req.ip,
+      forwardedFor: req.get('x-forwarded-for'),
+      userAgent: req.get('user-agent'),
+    })
     await mobileService.storeCustodianBackupShare(req, res)
   },
 )

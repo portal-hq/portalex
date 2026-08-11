@@ -104,6 +104,53 @@ This will return a `clientApiKey` you can use for testing:
 }
 ```
 
+## Registering a client from the client auth flow
+
+Clients created through Portal's client auth flow (magic link, OAuth, TOTP)
+never reach `/mobile/signup`, so PortalEx has no record of them. Register one
+here after authenticating with Portal:
+
+```
+curl \
+  -X POST \
+   -H "Content-Type: application/json" \
+   -H "x-api-key: $API_KEYS" \
+   -d '{"clientId": "clx...", "username": "user@example.com"}' \
+  localhost:3000/clients/register
+```
+
+`clientId` and `username` are required; `username` is the end user's email,
+since that is the only identifier the auth flow carries. `isAccountAbstracted`
+is accepted and logged but not stored, as `User` has no column for it.
+
+```
+{
+    "clientApiKey": null,
+    "clientId": "clx...",
+    "exchangeUserId": 619692,
+    "username": "user@example.com"
+}
+```
+
+The auth flow is find-or-create and runs on every login, so this endpoint is
+idempotent: a repeat call for a known `clientId` returns `200` with the stored
+record and writes nothing. A `username` already registered to a different
+`clientId` returns `409`.
+
+### Known limitations
+
+The auth flow never returns a `clientApiKey` — Portal mints one internally but
+exposes neither it nor a way to read it back — so a record registered here
+stores `null` for it. Two consequences:
+
+- `POST /mobile/login` treats a missing `clientApiKey` as "needs provisioning"
+  and mints a brand-new Portal client, overwriting `clientId`. That would point
+  the record away from the auth-flow client and its wallet. Clients registered
+  here authenticate through Portal and must not call `/mobile/login`.
+- `POST /mobile/signup` for a username registered here fails its unique
+  constraint and returns `500` rather than the usual `400 User already exists`,
+  because its duplicate check requires a non-null `clientApiKey`.
+
 ## Registering a Webhook with Ngrok
 
 To register a webhook for your custodian you need a public URL.

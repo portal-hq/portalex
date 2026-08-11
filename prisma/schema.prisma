@@ -74,7 +74,7 @@ model User {
   address        String?
   apiKey         String?
   apiSecret      String?
-  clientApiKey   String  @unique
+  clientApiKey   String? @unique
   clientId       String  @unique
   exchangeUserId Int     @unique
   id             Int     @id @default(autoincrement())

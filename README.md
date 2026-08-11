@@ -133,9 +133,15 @@ is accepted and logged but not stored, as `User` has no column for it.
 ```
 
 The auth flow is find-or-create and runs on every login, so this endpoint is
-idempotent: a repeat call for a known `clientId` returns `200` with the stored
-record and writes nothing. A `username` already registered to a different
-`clientId` returns `409`.
+idempotent: a repeat call for a known `clientId` and its matching `username`
+returns `200` with the stored record and writes nothing.
+
+Both identifiers have to agree with what is on file. A `username` already
+registered to a different `clientId` returns `409`, and so does a known
+`clientId` presented with a different `username` — a client stays bound to one
+end user for its lifetime, so a mismatch is a caller mixing up two clients
+rather than a rename. Neither conflict echoes the stored record back, so the
+endpoint cannot be used to look up a user from a guessed `clientId`.
 
 ### Known limitations
 

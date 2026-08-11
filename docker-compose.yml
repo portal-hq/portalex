@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=docker
       - POSTGRES_PASSWORD=docker
     volumes:
-      - db:/var/lib/postgresql-portalex/data
+      - db:/var/lib/postgresql/data
 
   # ngrok:
   #   container_name: ngrok

@@ -57,6 +57,31 @@ class ClientsController {
     this.logger = logger
   }
 
+  private replayRegistration = (
+    res: Response,
+    existing: User,
+    username: string,
+    message: string,
+  ) => {
+    if (existing.username !== username) {
+      this.logger.warn(
+        '[registerClient] Client is registered to a different username',
+        { clientId: existing.clientId },
+      )
+
+      return res.status(StatusCodes.CONFLICT).json({
+        message: `Client ${existing.clientId} is already registered to a different username`,
+      })
+    }
+
+    this.logger.info(message, {
+      clientId: existing.clientId,
+      exchangeUserId: existing.exchangeUserId,
+    })
+
+    return res.status(StatusCodes.OK).json(formatUser(existing))
+  }
+
   public registerClient = async (req: Request, res: Response) => {
     const body = (req.body ?? {}) as Record<string, unknown>
     const clientId = requireString(body.clientId, 'clientId')
@@ -65,12 +90,12 @@ class ClientsController {
 
     const existing = await this.prisma.user.findUnique({ where: { clientId } })
     if (existing) {
-      this.logger.info('[registerClient] Client is already registered', {
-        clientId,
-        exchangeUserId: existing.exchangeUserId,
-      })
-
-      return res.status(StatusCodes.OK).json(formatUser(existing))
+      return this.replayRegistration(
+        res,
+        existing,
+        username,
+        '[registerClient] Client is already registered',
+      )
     }
 
     const usernameOwner = await this.prisma.user.findUnique({
@@ -124,12 +149,12 @@ class ClientsController {
           })
 
           if (raced) {
-            this.logger.info(
+            return this.replayRegistration(
+              res,
+              raced,
+              username,
               '[registerClient] Client was registered concurrently',
-              { clientId, exchangeUserId: raced.exchangeUserId },
             )
-
-            return res.status(StatusCodes.OK).json(formatUser(raced))
           }
         }
 

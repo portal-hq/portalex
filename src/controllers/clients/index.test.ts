@@ -128,6 +128,36 @@ describe('registerClient', () => {
     expect(user.create).not.toHaveBeenCalled()
   })
 
+  it('responds with 409 when the client is registered to another username', async () => {
+    const user = prismaMock()
+    user.findUnique.mockResolvedValue(userRow({ username: 'someone@else.com' }))
+    const { controller } = controllerWith(user)
+    const res = mockResponse()
+
+    await controller.registerClient(request(validBody), res)
+
+    expect(res.status).toHaveBeenCalledWith(409)
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Client client-1 is already registered to a different username',
+    })
+    expect(user.create).not.toHaveBeenCalled()
+  })
+
+  it('does not disclose the stored record on a username mismatch', async () => {
+    const user = prismaMock()
+    user.findUnique.mockResolvedValue(
+      userRow({ username: 'someone@else.com', exchangeUserId: 12345 }),
+    )
+    const { controller } = controllerWith(user)
+    const res = mockResponse()
+
+    await controller.registerClient(request(validBody), res)
+
+    const body = JSON.stringify(res.json.mock.calls[0][0])
+    expect(body).not.toContain('someone@else.com')
+    expect(body).not.toContain('12345')
+  })
+
   it('accepts isAccountAbstracted without persisting it', async () => {
     const user = prismaMock()
     user.findUnique.mockResolvedValue(null)
@@ -232,6 +262,24 @@ describe('registerClient', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ exchangeUserId: 99 }),
     )
+  })
+
+  it('responds with 409 when a concurrent registration used another username', async () => {
+    const user = prismaMock()
+    user.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(userRow({ username: 'someone@else.com' }))
+    user.create.mockRejectedValue(uniqueError(['clientId']))
+    const { controller } = controllerWith(user)
+    const res = mockResponse()
+
+    await controller.registerClient(request(validBody), res)
+
+    expect(res.status).toHaveBeenCalledWith(409)
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Client client-1 is already registered to a different username',
+    })
   })
 
   it('responds with 409 for any other unique constraint violation', async () => {

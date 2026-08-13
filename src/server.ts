@@ -22,6 +22,7 @@ import {
   NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX,
   ORIGIN_WHITELIST,
 } from './config'
+import ClientsController from './controllers/clients'
 import NoahController from './controllers/noah'
 import {
   alertWebhookMiddleware,
@@ -83,6 +84,7 @@ const noahController = new NoahController({
   webhookPublicKeySandbox: NOAH_WEBHOOK_PUBLIC_KEY_SANDBOX,
   webhookPublicKeyProduction: NOAH_WEBHOOK_PUBLIC_KEY_PRODUCTION,
 })
+const clientsController = new ClientsController({ prisma, logger })
 
 // Global middleware applied before all routes, including Noah webhooks.
 app.use(morgan('tiny'))
@@ -450,6 +452,8 @@ app.get(
     await mobileService.getAlertWebhookEventsBySignature(req, res)
   },
 )
+
+app.post('/clients/register', clientsController.registerClient)
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof HttpError) {

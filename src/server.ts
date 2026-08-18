@@ -113,7 +113,7 @@ app.post(
 // The exempt routes parse their own body, which keeps the global JSON parser
 // below the gate. A malformed body on a gated route must still get a 401,
 // not a parser error.
-const parseJson = bodyParser.json()
+const parseJson = bodyParser.json({ limit: '2mb' })
 
 // Portal calls these with x-webhook-secret, which is their credential.
 app.post(

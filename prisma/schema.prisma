@@ -17,6 +17,9 @@ model AlertWebhookEvent {
   updatedAt  DateTime @updatedAt
 
   @@index([signatures])
+  // Serves the by-signature lookup, a case-insensitive substring match
+  // (ILIKE '%sig%') that the btree index above cannot use.
+  @@index([signatures(ops: raw("gin_trgm_ops"))], type: Gin, map: "AlertWebhookEvent_signatures_trgm_idx")
 }
 
 model ClientBackupShare {
